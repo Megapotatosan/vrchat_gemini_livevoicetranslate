@@ -94,7 +94,9 @@
     "exported": "Saved to {{path}}",
     "version": "Version {{version}}",
     "voice_name": "Speaking voice",
-    "voice_auto": "Automatic (follows your voice)"
+    "voice_auto": "Automatic (follows your voice)",
+    "continuous": "Stream audio continuously",
+    "continuous_hint": "Recommended. Gemini hears everything and decides where sentences end. Turn off to send only speech: cheaper, but sentences can be cut."
   },
   "lang": {
     "en": "English",

@@ -12,6 +12,7 @@ export interface Snapshot {
   ui_language: string;
   api_key: { present: boolean; masked: string | null };
   voice: string;
+  continuous: boolean;
   version: string;
 }
 

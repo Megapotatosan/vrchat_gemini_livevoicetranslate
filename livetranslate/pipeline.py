@@ -1,4 +1,7 @@
-"""One translation direction: capture → speech gate → Gemini Live session → bubbles/chatbox/voice."""
+"""One translation direction: capture → Gemini Live session → bubbles/chatbox/voice.
+
+Continuous mode streams every captured frame; the speech gate then only drives the typing indicator. Gated mode
+sends only speech and ends the audio stream after each pause."""
 
 from __future__ import annotations
 
@@ -7,8 +10,8 @@ import logging
 from collections.abc import Callable
 from contextlib import suppress
 
-from livetranslate.audio.capture import CaptureError, FrameSource
-from livetranslate.audio.gate import SpeechGate, make_webrtc_vad
+from livetranslate.audio.capture import FRAME_BYTES, CaptureError, FrameSource
+from livetranslate.audio.gate import FRAME_MS, SpeechGate, make_webrtc_vad
 from livetranslate.events import MessageEvent, Side, StatusEvent
 from livetranslate.gemini.budget import Backoff, ConnectionBudget
 from livetranslate.gemini.live_session import ConnectFn, LiveSession
@@ -22,7 +25,8 @@ log = logging.getLogger(__name__)
 class Pipeline:
     def __init__(self, side: Side, *, source: FrameSource, gate: SpeechGate, session: LiveSession,
                  turns: TurnAssembler, emit: Callable[[object], None],
-                 on_gate: Callable[[bool], None] | None = None, tick_s: float = 0.05) -> None:
+                 on_gate: Callable[[bool], None] | None = None, tick_s: float = 0.05,
+                 continuous: bool = True, chunk_frames: int = 5) -> None:
         self.side = side
         self._source = source
         self._gate = gate
@@ -31,6 +35,8 @@ class Pipeline:
         self._emit = emit
         self._on_gate = on_gate
         self._tick_s = tick_s
+        self._continuous = continuous
+        self._chunk_bytes = max(1, chunk_frames) * FRAME_BYTES
         self._tasks: list[asyncio.Task] = []
         self._stopped = False
 
@@ -71,6 +77,7 @@ class Pipeline:
                 await task
 
     async def _frames(self) -> None:
+        pending = bytearray()
         while True:
             frame = await self._source.queue.get()
             result = self._gate.process(frame)
@@ -78,10 +85,17 @@ class Pipeline:
                 self._turns.gate_opened()
                 if self._on_gate:
                     self._on_gate(True)
-            for f in result.frames:
-                await self._session.send_audio(f)
+            if self._continuous:
+                pending += frame
+            else:
+                for f in result.frames:
+                    pending += f
+            if len(pending) >= self._chunk_bytes or (result.closed and pending):
+                await self._session.send_audio(bytes(pending))
+                pending.clear()
             if result.closed:
-                await self._session.end_audio()
+                if not self._continuous:
+                    await self._session.end_audio()
                 if self._on_gate:
                     self._on_gate(False)
 
@@ -119,4 +133,5 @@ def build_pipeline(side: Side, *, settings: Settings, target_code: str, connect:
                           backoff=Backoff(g.reconnect_backoff),
                           voice=g.voice if side == "mine" else None)
     gate = SpeechGate.from_settings(settings.gate, is_speech or make_webrtc_vad(settings.gate.vad_aggressiveness))
-    return Pipeline(side, source=source, gate=gate, session=session, turns=turns, emit=emit, on_gate=on_gate)
+    return Pipeline(side, source=source, gate=gate, session=session, turns=turns, emit=emit, on_gate=on_gate,
+                    continuous=g.continuous, chunk_frames=g.chunk_ms // FRAME_MS)

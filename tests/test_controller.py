@@ -255,3 +255,16 @@ async def test_set_voice_persists_and_restarts_only_mine(ctl_factory):
     assert mine.stopped and not theirs.stopped and deps.pipelines[-1].side == "mine"
     assert await c.set_voice("") == {"ok": True}
     assert c.snapshot()["voice"] == ""
+
+
+async def test_set_continuous_persists_and_restarts_running_pipelines(ctl_factory):
+    c, deps = ctl_factory()
+    assert c.snapshot()["continuous"] is True
+    await c.set_direction("both")
+    await c.start()
+    mine, theirs = deps.pipelines
+    assert await c.set_continuous(False) == {"ok": True}
+    assert deps.store.load()[0].gemini.continuous is False and c.snapshot()["continuous"] is False
+    assert mine.stopped and theirs.stopped and len(deps.pipelines) == 4
+    assert await c.set_continuous(False) == {"ok": True}
+    assert len(deps.pipelines) == 4

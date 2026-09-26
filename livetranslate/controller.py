@@ -91,7 +91,7 @@ class Controller:
             "outputs": {"chatbox": ui.chatbox, "voice": ui.voice},
             "devices": self._settings.devices.model_dump(), "ui_language": ui.language,
             "api_key": {"present": key is not None, "masked": mask(key) if key else None},
-            "voice": self._settings.gemini.voice,
+            "voice": self._settings.gemini.voice, "continuous": self._settings.gemini.continuous,
             "version": __version__,
         }
 
@@ -273,6 +273,17 @@ class Controller:
                 self._settings.gemini.voice = voice
                 self._save()
                 await self._restart("mine")
+            self._emit_state()
+            return OK
+
+    async def set_continuous(self, on: bool) -> Result:
+        """Stream audio without pause (True) or only while someone speaks (False). Restarts running pipelines."""
+        async with self._lock:
+            if bool(on) != self._settings.gemini.continuous:
+                self._settings.gemini.continuous = bool(on)
+                self._save()
+                for side in list(self._pipelines):
+                    await self._restart(side)
             self._emit_state()
             return OK
 

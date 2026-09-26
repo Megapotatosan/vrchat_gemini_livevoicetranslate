@@ -18,8 +18,8 @@ ENGLISH_NAMES: dict[str, str] = {
     "th": "Thai", "vi": "Vietnamese", "id": "Indonesian", "ms": "Malay", "fil": "Filipino", "hi": "Hindi",
 }
 
-# Code sent to Gemini for each list entry. Identity until the live probe says otherwise.
-GEMINI_CODES: dict[str, str] = {code: code for code in TRANSLATION_LANGS}
+# Code sent to Gemini for each list entry. The translate model only documents regional Portuguese codes.
+GEMINI_CODES: dict[str, str] = {code: code for code in TRANSLATION_LANGS} | {"pt": "pt-BR"}
 
 _HANT_REGIONS = {"tw", "hk", "mo"}
 
