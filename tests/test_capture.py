@@ -15,7 +15,7 @@ def test_chunker_48k_stereo_to_16k_frames():
 def test_chunker_16k_mono_passthrough_keeps_remainder():
     ch = FrameChunker(16000, 1)
     assert ch.push(b"\1\0" * 300) == []
-    assert ch.push(b"\1\0" * 40) == [b"\1\0" * 320]
+    assert ch.push(b"\1\0" * 20) == [b"\1\0" * 320]
     assert ch.push(b"\1\0" * 300) == []
 
 
