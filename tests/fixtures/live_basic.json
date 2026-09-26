@@ -1,0 +1,9 @@
+[
+  {"server_content": {"input_transcription": {"text": "你好，"}}},
+  {"server_content": {"input_transcription": {"text": "我是小慧"}}},
+  {"server_content": {"output_transcription": {"text": "Hi, "}}},
+  {"server_content": {"model_turn": {"parts": [{"inline_data": {"mime_type": "audio/pcm;rate=24000", "data": "AQI="}}]}}},
+  {"server_content": {"output_transcription": {"text": "I'm Hui."}}},
+  {"session_resumption_update": {"new_handle": "h-1", "resumable": true}},
+  {"server_content": {"turn_complete": true}}
+]

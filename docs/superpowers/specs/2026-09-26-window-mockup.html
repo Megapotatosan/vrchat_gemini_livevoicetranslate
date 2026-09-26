@@ -7,7 +7,7 @@
 <style>
   :root {
     color-scheme: dark;
-    /* VRCT palette (src-ui/views/app/_index_css/variables.css) */
+    /* Palette */
     --primary-300: #61b4a7;
     --primary-400: #48a495;
     --primary-600: #368777;
@@ -139,7 +139,7 @@
 <div class="page">
   <div class="intro">
     <h1>VRChat LiveTranslate: window mockup</h1>
-    <p>nixi-agent's controls and behaviour, arranged in a VRCT-style left sidebar with VRCT's dark palette (teal accent, blue Sent and purple Received labels). The buttons work; the messages are examples.</p>
+    <p>Controls in a left sidebar, in a dark palette with a teal accent and blue Sent / purple Received labels. The buttons work; the messages are examples.</p>
   </div>
 
   <div class="scroller">
@@ -230,22 +230,21 @@
   </div>
 
   <div class="notes">
-    <div class="note"><h3>Sidebar (nixi's top bar, moved)</h3><ul>
+    <div class="note"><h3>Sidebar</h3><ul>
       <li><b>Start / Stop</b>: one large button; turns red while running</li>
       <li><b>Direction</b>: I speak / Others / Both (Both runs two Gemini sessions, started 300 ms apart)</li>
       <li><b>Languages</b>: one pair, mirrored automatically for the other direction; "Auto-detect" only for the source language</li>
       <li><b>Outputs</b>: Chatbox and Translated voice; the wrist overlay and its fine-tune panel slot in here after v1</li>
       <li><b>Footer</b>: API key status (a link to get a key when missing) and Settings</li>
     </ul></div>
-    <div class="note"><h3>Main area (nixi's chat view)</h3><ul>
+    <div class="note"><h3>Main area</h3><ul>
       <li><b>Right bubbles</b> are yours, <b>left</b> are other players'; small original line above the large translation</li>
       <li>Text still being translated updates <b>in place</b> with a cursor (bottom bubble)</li>
       <li><b>Typing bar</b>: Enter sends and Esc clears; greyed out when the direction is "Others"</li>
       <li><b>Status bar</b>: state dot and latest status on the left, count and latency on the right</li>
     </ul></div>
-    <div class="note"><h3>Dropped from nixi</h3><ul>
-      <li><b>☕ Sponsor</b> button (nixi's personal donation links)</li>
-      <li>Everything else from nixi's v1 feature set is kept, except the wrist overlay, which comes after v1</li>
+    <div class="note"><h3>After v1</h3><ul>
+      <li><b>Wrist overlay</b> (SteamVR) and its fine-tune panel: shown greyed out here, hidden in the shipped v1</li>
     </ul></div>
   </div>
 </div>

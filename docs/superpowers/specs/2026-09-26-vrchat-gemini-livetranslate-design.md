@@ -6,10 +6,8 @@
 
 ## 1. Goal
 
-A Windows desktop app for real-time speech translation in VRChat. It rebuilds the feature set of
-[nixi-agent/vrchat-livetranslate](https://github.com/nixi-agent/vrchat-livetranslate), swaps its Qwen realtime
-backend for Google's Gemini Live API, and moves nixi's controls into a sidebar layout with the colour theme of
-[misyaguziya/VRCT](https://github.com/misyaguziya/VRCT).
+A Windows desktop app for real-time speech translation in VRChat, powered by Google's Gemini Live API. Its controls
+sit in a left sidebar, in a dark theme with a teal accent.
 
 Success for v1 means that, on the user's Windows PC:
 
@@ -22,33 +20,29 @@ Success for v1 means that, on the user's Windows PC:
 
 ### In v1
 
-| Feature | Source of the idea |
-|---|---|
-| Mic → Gemini → VRChat chatbox (OSC) | nixi ① |
-| Game audio (WASAPI loopback) → Gemini → app chat log | nixi ② (log instead of wrist overlay) |
-| Mic → Gemini translated speech → virtual audio cable | nixi ③ |
-| Typed text → Gemini text model → chatbox | nixi ④ |
-| Direction: I speak / Others / Both | nixi |
-| One language pair, mirrored for the other direction | nixi |
-| Sidebar layout, VRCT palette | VRCT |
-| Interface in English, 繁體中文, 日本語, 한국어 | VRCT's locale set (with Traditional rather than Simplified Chinese) |
+- Mic → Gemini → VRChat chatbox (OSC)
+- Game audio (WASAPI loopback) → Gemini → app chat log
+- Mic → Gemini translated speech → virtual audio cable
+- Typed text → Gemini text model → chatbox
+- Direction: I speak / Others / Both
+- One language pair, mirrored for the other direction
+- Sidebar layout, dark theme with teal accent
+- Interface in English, 繁體中文, 日本語, 한국어
 
 ### After v1 (not designed here)
 
 - SteamVR wrist overlay and its fine-tune panel. The sidebar leaves a slot for both (shown greyed out in the mockup,
   hidden in the shipped v1).
 
-### Dropped
+### Not planned
 
-- nixi's ☕ Sponsor button (it links to nixi's personal donation pages).
-- Typed text producing voice (nixi does not do this either).
-- VRCT's own features (Speaker2Log tabs, OCR, presets 1/2/3, transliteration, etc.). Only VRCT's layout and colours are used.
+- Typed text producing voice. Typed messages are text only.
 
 ## 3. Decisions
 
 | Decision | Choice | Why |
 |---|---|---|
-| UI technology | pywebview + React/TypeScript/Vite, Python backend in the same process | VRCT look with web tech; one Python process and one PyInstaller build; Node only needed at build time |
+| UI technology | pywebview + React/TypeScript/Vite, Python backend in the same process | Rich styling with web tech; one Python process and one PyInstaller build; Node only needed at build time |
 | Gemini connection strategy | Persistent Live session per direction, audio sent only while speech is detected | Latency of an always-on session at close to per-utterance cost |
 | Live model | `gemini-3.5-live-translate-preview` (configurable) | Dedicated speech-to-speech translation model, 70+ languages, source auto-detect |
 | Typed-text model | `gemini-3.1-flash-lite` (configurable; exact ID confirmed by the probe) | The live model takes audio only; short chat lines need a fast, cheap text model |
@@ -80,7 +74,7 @@ Default 1000×660, minimum 820×560, dark Windows title bar.
 
 **Main area**
 
-- **Chat log.** Bubbles on the right are mine (VRCT teal `#317767`), on the left are other players' (grey `#3a3b3e`).
+- **Chat log.** Bubbles on the right are mine (teal `#317767`), on the left are other players' (grey `#3a3b3e`).
   Each has a meta line (`Sent` in `#6197b4` or `Received` in `#a861b4`, then `HH:MM:SS`), the original text small
   above, and the translation large below. A bubble still receiving text updates in place and shows a blinking cursor.
   The log keeps the last 500 bubbles and auto-scrolls only when already scrolled to the bottom.
@@ -99,7 +93,7 @@ Default 1000×660, minimum 820×560, dark Windows title bar.
 | Interface language | English / 繁體中文 / 日本語 / 한국어 |
 | Logs | "Export log archive…" |
 
-### 4.2 Colours (VRCT `variables.css`)
+### 4.2 Colours
 
 | Token | Value | Use |
 |---|---|---|
@@ -286,10 +280,9 @@ is open, and `send_realtime_input(audio_stream_end=True)` when it closes.
 - A turn starts at the first transcript chunk after the previous turn was finalised. It gets a new bubble id.
 - Source and translation text are concatenated from chunks. Every change emits
   `message{id, side, source, translation, final: false}`.
-- A turn is finalised on `turn_complete`, or when no chunk has arrived for `final_silence_s` (3.0 s, nixi's value),
+- A turn is finalised on `turn_complete`, or when no chunk has arrived for `final_silence_s` (3.0 s),
   whichever comes first. Finalising emits `final: true`. `final_silence_s` must stay above the model's longest gap
-  between chunks during continuous speech; otherwise sentences get cut in half (nixi measured 2.3 s for Qwen; the
-  probe measures it for Gemini).
+  between chunks during continuous speech; otherwise sentences get cut in half. The probe measures that gap.
 - **Stats.** `first_text_ms` = time from a `gate_open` to the first translation chunk that follows it. `count` =
   finalised turns.
 
@@ -363,7 +356,7 @@ Sent as `window.__lt.dispatch([...events])`, batched every 50 ms.
   - `/chatbox/input (text, True, sound)` sends a message.
   - `/chatbox/typing True` is sent on Mine `gate_open` and `False` after the turn's final message.
 - **What is sent.** Translation only.
-- **Merger timing (nixi):**
+- **Merger timing:**
   - the first translation text of a turn is sent immediately;
   - while the turn is open, the latest text is sent every `interval_s` (2.0 s);
   - the final text is always sent;
@@ -385,7 +378,7 @@ Sent as `window.__lt.dispatch([...events])`, batched every 50 ms.
   - If none is found, the switch turns off and the status shows *"No virtual audio cable found. Install VB-Cable or
     VoiceMeeter"* with a link to `https://vb-audio.com/Cable/`.
 - **Audio path.** Gemini 24 kHz PCM → `soxr` resample to 48 kHz → jitter buffer → `sounddevice.OutputStream`.
-- **Buffer rules (nixi):**
+- **Buffer rules:**
   - playback starts after 300 ms is buffered;
   - the queue is capped at 2000 ms;
   - over the cap, whole queued turns are dropped oldest first;
@@ -526,3 +519,8 @@ Windows-only modules (`PyAudioWPatch`, DWM title bar) are imported lazily, so th
 - **In the build environment (Linux container):** all automated tests, and demo-mode UI screenshots.
 - **In GitHub Actions:** the Windows build.
 - **Only on the user's PC:** real audio devices, VRChat, and live Gemini behaviour (probe and `--self-test`).
+
+## 14. Credits
+
+Thanks to [nixi-agent/vrchat-livetranslate](https://github.com/nixi-agent/vrchat-livetranslate) and
+[misyaguziya/VRCT](https://github.com/misyaguziya/VRCT) for the inspiration.

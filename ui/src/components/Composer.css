@@ -1,0 +1,6 @@
+.compose { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--d-875); background: var(--d-925); }
+.compose input { flex: 1; min-width: 0; background: var(--d-900); border: 1px solid var(--d-800); border-radius: 6px; padding: 10px 12px; font-size: 14px; }
+.compose input:disabled { opacity: 0.5; }
+.compose button { border: 0; border-radius: 6px; background: var(--d-850); padding: 0 16px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.compose button:hover:not(:disabled) { background: var(--d-800); }
+.compose button:disabled { opacity: 0.5; cursor: not-allowed; }

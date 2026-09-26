@@ -1,0 +1,127 @@
+{
+  "app": {
+    "name": "LiveTranslate",
+    "subtitle": "Gemini Live · VRChat"
+  },
+  "sidebar": {
+    "start": "▶ 開始翻譯",
+    "stop": "■ 停止翻譯",
+    "direction": "方向",
+    "languages": "語言",
+    "i_speak": "我說",
+    "translate_to": "翻譯成",
+    "auto": "自動偵測",
+    "swap": "交換語言",
+    "mirror": "對方說話：{{from}} → {{to}}",
+    "mirror_auto": "對方說話：自動 → {{to}}（介面語言）",
+    "outputs": "輸出",
+    "chatbox": "聊天框",
+    "chatbox_hint": "OSC → VRChat 泡泡",
+    "voice": "翻譯語音",
+    "voice_hint": "虛擬麥克風 → 對方聽得到",
+    "key_set": "已設定 Gemini API 金鑰",
+    "get_key": "尚無 API 金鑰：點此取得 ▸",
+    "settings": "設定"
+  },
+  "direction": {
+    "mine": "我說",
+    "theirs": "對方",
+    "both": "雙向"
+  },
+  "side": {
+    "mine": "我說",
+    "theirs": "對方"
+  },
+  "chat": {
+    "sent": "已送出",
+    "received": "已接收",
+    "empty": "按下開始後說話，翻譯會顯示在這裡。"
+  },
+  "composer": {
+    "placeholder": "輸入訊息，按 Enter 送出（Esc 清除）",
+    "disabled_theirs": "方向包含「我說」時才能打字",
+    "disabled_stopped": "開始翻譯後才能打字",
+    "send": "送出"
+  },
+  "status": {
+    "ready": "就緒",
+    "running": "翻譯中",
+    "stopped": "已停止",
+    "settings_reset": "設定檔損壞，已重設（備份為 settings.json.broken）",
+    "reconnecting": "重新連線中（第 {{attempt}} 次）…",
+    "quota_retry": "已達 Gemini 配額上限，{{seconds}} 秒後重試",
+    "device_fallback": "找不到裝置「{{name}}」，改用預設裝置",
+    "stats": "已翻譯 {{count}} 則 · 首字 {{ms}} 毫秒",
+    "stats_idle": "已翻譯 {{count}} 則",
+    "get_cable": "下載 VB-Cable ▸",
+    "reconnected": "已重新連線"
+  },
+  "errors": {
+    "no_api_key": "請先在設定中加入 Gemini API 金鑰",
+    "auth": "Gemini 拒絕了這個 API 金鑰，請到設定中檢查。",
+    "network": "無法連線到 Gemini，請檢查網路連線。",
+    "model_unavailable": "此 API 金鑰無法使用模型 {{model}}",
+    "capture_failed": "無法開啟「{{side}}」的音訊裝置",
+    "no_loopback": "找不到 VRChat 音訊裝置，請播放一些遊戲聲音後再試。",
+    "no_virtual_cable": "找不到虛擬音訊線，請安裝 VB-Cable 或 VoiceMeeter。",
+    "empty_text": "請先輸入訊息",
+    "not_running": "請先開始翻譯",
+    "direction_theirs": "方向包含「我說」時才能打字",
+    "timeout": "Gemini 回應逾時",
+    "translate_failed": "翻譯失敗",
+    "bad_argument": "無效的請求",
+    "cancelled": "已取消",
+    "export_failed": "無法儲存日誌壓縮檔"
+  },
+  "settings": {
+    "title": "設定",
+    "close": "關閉設定",
+    "api_key": "Gemini API 金鑰",
+    "save": "儲存",
+    "clear": "清除",
+    "key_ok": "金鑰可用，已儲存",
+    "key_cleared": "已移除金鑰",
+    "mic": "麥克風",
+    "loopback": "VRChat 音訊",
+    "voice_out": "翻譯語音輸出",
+    "auto_mic": "自動偵測（預設裝置）",
+    "auto_loopback": "自動偵測（回送）",
+    "auto_voice": "自動（VoiceMeeter / VB-Cable）",
+    "refresh": "重新整理",
+    "ui_language": "介面語言",
+    "logs": "日誌",
+    "export": "匯出日誌壓縮檔…",
+    "exported": "已儲存至 {{path}}",
+    "version": "版本 {{version}}"
+  },
+  "lang": {
+    "en": "英文",
+    "zh-Hant": "中文（繁體）",
+    "zh-Hans": "中文（簡體）",
+    "ja": "日文",
+    "ko": "韓文",
+    "es": "西班牙文",
+    "fr": "法文",
+    "de": "德文",
+    "it": "義大利文",
+    "pt": "葡萄牙文",
+    "ru": "俄文",
+    "uk": "烏克蘭文",
+    "pl": "波蘭文",
+    "nl": "荷蘭文",
+    "tr": "土耳其文",
+    "ar": "阿拉伯文",
+    "th": "泰文",
+    "vi": "越南文",
+    "id": "印尼文",
+    "ms": "馬來文",
+    "fil": "菲律賓文",
+    "hi": "印地文"
+  },
+  "ui_lang": {
+    "en": "English",
+    "zh-Hant": "繁體中文",
+    "ja": "日本語",
+    "ko": "한국어"
+  }
+}

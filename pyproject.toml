@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "livetranslate"
+dynamic = ["version"]
+description = "Real-time VRChat speech translation with the Gemini Live API"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "google-genai>=2.25",
+  "pywebview>=5.3",
+  "sounddevice>=0.5",
+  "PyAudioWPatch>=0.2.12.7; sys_platform == 'win32'",
+  "numpy>=2.0",
+  "soxr>=0.5",
+  "webrtcvad-wheels>=2.0.14",
+  "python-osc>=1.9",
+  "keyring>=25",
+  "pydantic>=2.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6", "pyinstaller>=6.10", "Pillow>=10", "PyYAML>=6"]
+
+[tool.setuptools.dynamic]
+version = { attr = "livetranslate.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["livetranslate*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]

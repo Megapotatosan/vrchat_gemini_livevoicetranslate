@@ -1,0 +1,127 @@
+{
+  "app": {
+    "name": "LiveTranslate",
+    "subtitle": "Gemini Live · VRChat"
+  },
+  "sidebar": {
+    "start": "▶ 翻訳を開始",
+    "stop": "■ 翻訳を停止",
+    "direction": "方向",
+    "languages": "言語",
+    "i_speak": "自分の言語",
+    "translate_to": "翻訳先",
+    "auto": "自動検出",
+    "swap": "言語を入れ替え",
+    "mirror": "相手の発言：{{from}} → {{to}}",
+    "mirror_auto": "相手の発言：自動 → {{to}}（表示言語）",
+    "outputs": "出力",
+    "chatbox": "チャットボックス",
+    "chatbox_hint": "OSC → VRChat の吹き出し",
+    "voice": "翻訳音声",
+    "voice_hint": "仮想マイク → 相手に聞こえる",
+    "key_set": "Gemini API キー設定済み",
+    "get_key": "API キーなし：取得する ▸",
+    "settings": "設定"
+  },
+  "direction": {
+    "mine": "自分",
+    "theirs": "相手",
+    "both": "双方向"
+  },
+  "side": {
+    "mine": "自分",
+    "theirs": "相手"
+  },
+  "chat": {
+    "sent": "送信",
+    "received": "受信",
+    "empty": "開始を押して話すと、ここに翻訳が表示されます。"
+  },
+  "composer": {
+    "placeholder": "メッセージを入力して Enter で送信（Esc で消去）",
+    "disabled_theirs": "方向に「自分」が含まれるときに入力できます",
+    "disabled_stopped": "翻訳を開始すると入力できます",
+    "send": "送信"
+  },
+  "status": {
+    "ready": "準備完了",
+    "running": "翻訳中",
+    "stopped": "停止中",
+    "settings_reset": "設定ファイルが壊れていたためリセットしました（settings.json.broken にバックアップ）",
+    "reconnecting": "再接続中（{{attempt}} 回目）…",
+    "quota_retry": "Gemini の利用上限に達しました。{{seconds}} 秒後に再試行します",
+    "device_fallback": "デバイス「{{name}}」が見つからないため、既定のデバイスを使用します",
+    "stats": "翻訳 {{count}} 件 · 最初の文字まで {{ms}} ms",
+    "stats_idle": "翻訳 {{count}} 件",
+    "get_cable": "VB-Cable を入手 ▸",
+    "reconnected": "再接続しました"
+  },
+  "errors": {
+    "no_api_key": "先に設定で Gemini API キーを追加してください",
+    "auth": "Gemini が API キーを拒否しました。設定を確認してください。",
+    "network": "Gemini に接続できません。インターネット接続を確認してください。",
+    "model_unavailable": "この API キーではモデル {{model}} を使用できません",
+    "capture_failed": "「{{side}}」の音声デバイスを開けませんでした",
+    "no_loopback": "VRChat の音声デバイスが見つかりません。ゲーム音声を再生してから再試行してください。",
+    "no_virtual_cable": "仮想オーディオケーブルが見つかりません。VB-Cable または VoiceMeeter をインストールしてください。",
+    "empty_text": "先にメッセージを入力してください",
+    "not_running": "先に翻訳を開始してください",
+    "direction_theirs": "方向に「自分」が含まれるときに入力できます",
+    "timeout": "Gemini の応答がタイムアウトしました",
+    "translate_failed": "翻訳に失敗しました",
+    "bad_argument": "無効なリクエストです",
+    "cancelled": "キャンセルしました",
+    "export_failed": "ログのアーカイブを保存できませんでした"
+  },
+  "settings": {
+    "title": "設定",
+    "close": "設定を閉じる",
+    "api_key": "Gemini API キー",
+    "save": "保存",
+    "clear": "削除",
+    "key_ok": "キーは有効で、保存しました",
+    "key_cleared": "キーを削除しました",
+    "mic": "マイク",
+    "loopback": "VRChat の音声",
+    "voice_out": "翻訳音声の出力先",
+    "auto_mic": "自動検出（既定のデバイス）",
+    "auto_loopback": "自動検出（ループバック）",
+    "auto_voice": "自動（VoiceMeeter / VB-Cable）",
+    "refresh": "更新",
+    "ui_language": "表示言語",
+    "logs": "ログ",
+    "export": "ログをアーカイブとして書き出す…",
+    "exported": "{{path}} に保存しました",
+    "version": "バージョン {{version}}"
+  },
+  "lang": {
+    "en": "英語",
+    "zh-Hant": "中国語（繁体字）",
+    "zh-Hans": "中国語（簡体字）",
+    "ja": "日本語",
+    "ko": "韓国語",
+    "es": "スペイン語",
+    "fr": "フランス語",
+    "de": "ドイツ語",
+    "it": "イタリア語",
+    "pt": "ポルトガル語",
+    "ru": "ロシア語",
+    "uk": "ウクライナ語",
+    "pl": "ポーランド語",
+    "nl": "オランダ語",
+    "tr": "トルコ語",
+    "ar": "アラビア語",
+    "th": "タイ語",
+    "vi": "ベトナム語",
+    "id": "インドネシア語",
+    "ms": "マレー語",
+    "fil": "フィリピン語",
+    "hi": "ヒンディー語"
+  },
+  "ui_lang": {
+    "en": "English",
+    "zh-Hant": "繁體中文",
+    "ja": "日本語",
+    "ko": "한국어"
+  }
+}

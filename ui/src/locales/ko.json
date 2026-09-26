@@ -1,0 +1,127 @@
+{
+  "app": {
+    "name": "LiveTranslate",
+    "subtitle": "Gemini Live · VRChat"
+  },
+  "sidebar": {
+    "start": "▶ 번역 시작",
+    "stop": "■ 번역 중지",
+    "direction": "방향",
+    "languages": "언어",
+    "i_speak": "내 언어",
+    "translate_to": "번역할 언어",
+    "auto": "자동 감지",
+    "swap": "언어 바꾸기",
+    "mirror": "상대방의 말: {{from}} → {{to}}",
+    "mirror_auto": "상대방의 말: 자동 → {{to}} (인터페이스 언어)",
+    "outputs": "출력",
+    "chatbox": "채팅박스",
+    "chatbox_hint": "OSC → VRChat 말풍선",
+    "voice": "번역 음성",
+    "voice_hint": "가상 마이크 → 상대방이 들음",
+    "key_set": "Gemini API 키 설정됨",
+    "get_key": "API 키 없음: 받기 ▸",
+    "settings": "설정"
+  },
+  "direction": {
+    "mine": "나",
+    "theirs": "상대방",
+    "both": "양방향"
+  },
+  "side": {
+    "mine": "나",
+    "theirs": "상대방"
+  },
+  "chat": {
+    "sent": "보냄",
+    "received": "받음",
+    "empty": "시작을 누르고 말하면 여기에 번역이 표시됩니다."
+  },
+  "composer": {
+    "placeholder": "메시지를 입력하고 Enter로 보내기 (Esc로 지우기)",
+    "disabled_theirs": "방향에 ‘나’가 포함될 때 입력할 수 있습니다",
+    "disabled_stopped": "번역을 시작하면 입력할 수 있습니다",
+    "send": "보내기"
+  },
+  "status": {
+    "ready": "준비됨",
+    "running": "번역 중",
+    "stopped": "중지됨",
+    "settings_reset": "설정 파일이 손상되어 초기화했습니다 (settings.json.broken에 백업)",
+    "reconnecting": "다시 연결하는 중 ({{attempt}}번째)…",
+    "quota_retry": "Gemini 사용 한도에 도달했습니다. {{seconds}}초 후 다시 시도합니다",
+    "device_fallback": "‘{{name}}’ 장치를 찾을 수 없어 기본 장치를 사용합니다",
+    "stats": "번역 {{count}}건 · 첫 글자까지 {{ms}} ms",
+    "stats_idle": "번역 {{count}}건",
+    "get_cable": "VB-Cable 받기 ▸",
+    "reconnected": "다시 연결되었습니다"
+  },
+  "errors": {
+    "no_api_key": "먼저 설정에서 Gemini API 키를 추가하세요",
+    "auth": "Gemini가 API 키를 거부했습니다. 설정에서 확인하세요.",
+    "network": "Gemini에 연결할 수 없습니다. 인터넷 연결을 확인하세요.",
+    "model_unavailable": "이 API 키로는 {{model}} 모델을 사용할 수 없습니다",
+    "capture_failed": "‘{{side}}’ 오디오 장치를 열 수 없습니다",
+    "no_loopback": "VRChat 오디오 장치를 찾을 수 없습니다. 게임 소리를 재생한 뒤 다시 시도하세요.",
+    "no_virtual_cable": "가상 오디오 케이블을 찾을 수 없습니다. VB-Cable 또는 VoiceMeeter를 설치하세요.",
+    "empty_text": "먼저 메시지를 입력하세요",
+    "not_running": "먼저 번역을 시작하세요",
+    "direction_theirs": "방향에 ‘나’가 포함될 때 입력할 수 있습니다",
+    "timeout": "Gemini 응답 시간이 초과되었습니다",
+    "translate_failed": "번역에 실패했습니다",
+    "bad_argument": "잘못된 요청입니다",
+    "cancelled": "취소되었습니다",
+    "export_failed": "로그 압축 파일을 저장할 수 없습니다"
+  },
+  "settings": {
+    "title": "설정",
+    "close": "설정 닫기",
+    "api_key": "Gemini API 키",
+    "save": "저장",
+    "clear": "지우기",
+    "key_ok": "키가 확인되어 저장되었습니다",
+    "key_cleared": "키를 삭제했습니다",
+    "mic": "마이크",
+    "loopback": "VRChat 오디오",
+    "voice_out": "번역 음성 출력",
+    "auto_mic": "자동 감지 (기본 장치)",
+    "auto_loopback": "자동 감지 (루프백)",
+    "auto_voice": "자동 (VoiceMeeter / VB-Cable)",
+    "refresh": "새로 고침",
+    "ui_language": "인터페이스 언어",
+    "logs": "로그",
+    "export": "로그 압축 파일 내보내기…",
+    "exported": "{{path}}에 저장했습니다",
+    "version": "버전 {{version}}"
+  },
+  "lang": {
+    "en": "영어",
+    "zh-Hant": "중국어(번체)",
+    "zh-Hans": "중국어(간체)",
+    "ja": "일본어",
+    "ko": "한국어",
+    "es": "스페인어",
+    "fr": "프랑스어",
+    "de": "독일어",
+    "it": "이탈리아어",
+    "pt": "포르투갈어",
+    "ru": "러시아어",
+    "uk": "우크라이나어",
+    "pl": "폴란드어",
+    "nl": "네덜란드어",
+    "tr": "튀르키예어",
+    "ar": "아랍어",
+    "th": "태국어",
+    "vi": "베트남어",
+    "id": "인도네시아어",
+    "ms": "말레이어",
+    "fil": "필리핀어",
+    "hi": "힌디어"
+  },
+  "ui_lang": {
+    "en": "English",
+    "zh-Hant": "繁體中文",
+    "ja": "日本語",
+    "ko": "한국어"
+  }
+}
