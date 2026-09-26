@@ -68,3 +68,12 @@ Fix (settings version 2):
   decides where sentences end. Saved settings still at the old 800 ms are migrated.
 - A bubble closes after `final_silence_s` (3 s) only when the translation ends like a sentence (。．.！!？?…);
   otherwise it waits `unterminated_silence_s` (8 s), so a held-back ending joins the same bubble.
+
+## Continuous streaming (Google's documented usage)
+
+Google's Live Translate guide describes the model as continuous stream processing: no turns, audio sent in
+100 ms chunks. The app now follows it by default (`gemini.continuous` = true): every captured frame is streamed in
+100 ms chunks (`gemini.chunk_ms`) and `audio_stream_end` is never sent, so the model alone decides sentence ends.
+The speech gate still runs, but only for the chatbox typing indicator. The Settings switch **Stream audio
+continuously** turns this off and restores the speech-gated behaviour above. Portuguese is sent as `pt-BR`,
+because the guide lists only the regional codes.

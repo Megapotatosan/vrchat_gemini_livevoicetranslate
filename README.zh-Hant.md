@@ -49,6 +49,11 @@ VRChat 即時語音翻譯，使用 Google Gemini Live API。
 聲音之一（Kore、Puck、Charon…）。想先聽聽差別，可以執行 `python scripts/probe_live.py --voices Kore,Puck`，
 再播放它存在 `probe_audio/` 資料夾中的 WAV 檔。
 
+## 持續串流
+
+**持續串流音訊**（⚙ 設定，預設開啟）會把所有聲音不間斷地送給 Gemini，這正是翻譯模型設計的用法：它一直在聽，並自行判斷
+句子在哪裡結束。關閉後只會送出有人說話的片段，比較省 Gemini 配額，但停頓較久時句子可能被切成兩半。
+
 ## 設定檔
 
 設定存放在 `%APPDATA%\LiveTranslate\settings.json`，日誌在 `%APPDATA%\LiveTranslate\logs`。

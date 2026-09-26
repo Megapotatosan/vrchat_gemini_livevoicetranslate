@@ -26,3 +26,7 @@ def test_theirs_target_mirrors_and_falls_back():
 
 def test_gemini_code_identity_by_default():
     assert gemini_code("zh-Hant") == "zh-Hant"
+
+
+def test_portuguese_uses_a_documented_regional_code():
+    assert gemini_code("pt") == "pt-BR"

@@ -96,6 +96,14 @@ export default function SettingsDialog({ snap, open, onClose }: { snap: Snapshot
             </select>
           </span>
         </div>
+        <div className="field">
+          <span className="label" id="continuous-label">{t("settings.continuous")}</span>
+          <span className="ctl">
+            <button type="button" className="switch" role="switch" aria-checked={snap.continuous}
+                    aria-labelledby="continuous-label" onClick={() => void api.set_continuous(!snap.continuous)} />
+          </span>
+        </div>
+        <p className="field-hint">{t("settings.continuous_hint")}</p>
         <div className="hr" />
         <div className="field">
           <label htmlFor="ui-lang">{t("settings.ui_language")}</label>

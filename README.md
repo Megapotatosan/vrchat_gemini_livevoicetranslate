@@ -49,6 +49,13 @@ Other players then hear only the translation, not your own voice.
 own voice; or choose one of Gemini's 30 named voices (Kore, Puck, Charon…). To hear the difference first, run
 `python scripts/probe_live.py --voices Kore,Puck` and listen to the WAV files it saves in `probe_audio/`.
 
+## Continuous streaming
+
+**Stream audio continuously** (⚙ Settings, on by default) sends all audio to Gemini without pause, which is how
+the translate model is designed to work: it listens all the time and decides where sentences end. Turn it off to
+send only the moments when someone is speaking; that uses less of your Gemini quota, but a long pause can cut a
+sentence in two.
+
 ## Settings file
 
 Settings live in `%APPDATA%\LiveTranslate\settings.json`, logs in `%APPDATA%\LiveTranslate\logs`.

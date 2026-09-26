@@ -40,6 +40,10 @@ class GeminiSettings(_Model):
     live_model: str = "gemini-3.5-live-translate-preview"
     text_model: str = "gemini-3.1-flash-lite"
     voice: str = ""  # "" = the translate model's own voice; otherwise a name from gemini/voices.py
+    # True: stream all audio without pause, as the translate model is designed for. False: send only speech
+    # (the speech gate) and end the audio stream after each pause, which costs less but can cut sentences.
+    continuous: bool = True
+    chunk_ms: int = 100  # audio is sent in chunks this long
     final_silence_s: float = 3.0  # quiet time before a finished sentence's bubble closes
     unterminated_silence_s: float = 8.0  # the same for a sentence without ending punctuation
     max_new_sessions_per_minute: int = 4

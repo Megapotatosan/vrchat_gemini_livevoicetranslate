@@ -43,3 +43,11 @@ test("speaking voice picker", async () => {
   await userEvent.selectOptions(select, "Kore");
   expect(api.set_voice).toHaveBeenCalledWith("Kore");
 });
+
+test("continuous streaming switch", async () => {
+  render(<SettingsDialog snap={{ ...snap, continuous: true }} open onClose={() => {}} />);
+  const toggle = screen.getByRole("switch", { name: "Stream audio continuously" });
+  expect(toggle).toHaveAttribute("aria-checked", "true");
+  await userEvent.click(toggle);
+  expect(api.set_continuous).toHaveBeenCalledWith(false);
+});

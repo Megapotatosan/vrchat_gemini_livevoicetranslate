@@ -27,7 +27,8 @@ class DemoController:
             "running": False, "direction": "both", "source_lang": "zh-Hant", "target_lang": "en",
             "theirs_target": "zh-Hant", "outputs": {"chatbox": True, "voice": False},
             "devices": {"mic": "", "loopback": "", "voice": ""}, "ui_language": "zh-Hant",
-            "api_key": {"present": True, "masked": "AIza…demo"}, "voice": "", "version": __version__,
+            "api_key": {"present": True, "masked": "AIza…demo"}, "voice": "", "continuous": True,
+            "version": __version__,
         }
         self._task: asyncio.Task | None = None
         self._count = 0
@@ -77,6 +78,10 @@ class DemoController:
 
     async def set_voice(self, voice: str) -> dict[str, Any]:
         self._state["voice"] = voice
+        return self._changed()
+
+    async def set_continuous(self, on: bool) -> dict[str, Any]:
+        self._state["continuous"] = on
         return self._changed()
 
     async def set_output(self, name: str, on: bool) -> dict[str, Any]:

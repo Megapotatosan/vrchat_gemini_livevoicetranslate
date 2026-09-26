@@ -73,6 +73,11 @@ class Bridge:
             return BAD
         return self._call("set_voice", voice)
 
+    def set_continuous(self, on: bool) -> dict[str, Any]:
+        if not isinstance(on, bool):
+            return BAD
+        return self._call("set_continuous", on)
+
     def send_text(self, text: str) -> dict[str, Any]:
         if not isinstance(text, str) or len(text) > MAX_TEXT:
             return BAD

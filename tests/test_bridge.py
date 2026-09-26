@@ -66,7 +66,7 @@ def test_only_bridge_methods_are_public():
     public = {n for n in dir(Bridge) if not n.startswith("_")}
     assert public == {"get_state", "start", "stop", "set_direction", "set_languages", "set_output", "send_text",
                       "list_devices", "set_device", "set_api_key", "clear_api_key", "set_ui_language",
-                      "export_logs", "open_url", "log_ui_error", "set_voice"}
+                      "export_logs", "open_url", "log_ui_error", "set_voice", "set_continuous"}
 
 
 def test_set_voice_validation(bridge):
@@ -75,3 +75,10 @@ def test_set_voice_validation(bridge):
     assert b.set_voice("Kore") == {"ok": True}
     assert b.set_voice("Robot") == {"ok": False, "error": "errors.bad_argument"}
     assert b.set_voice("") == {"ok": True}
+
+
+def test_set_continuous_validation(bridge):
+    b, ctl, _ = bridge
+    ctl.set_continuous = AsyncMock(return_value={"ok": True})
+    assert b.set_continuous(False) == {"ok": True}
+    assert b.set_continuous("no") == {"ok": False, "error": "errors.bad_argument"}

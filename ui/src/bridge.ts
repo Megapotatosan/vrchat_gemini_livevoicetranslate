@@ -11,6 +11,7 @@ interface PyApi {
   set_languages(src: string, dst: string): Promise<Result>;
   set_output(name: "chatbox" | "voice", on: boolean): Promise<Result>;
   set_voice(voice: string): Promise<Result>;
+  set_continuous(on: boolean): Promise<Result>;
   send_text(text: string): Promise<Result>;
   list_devices(): Promise<Result<DeviceLists>>;
   set_device(kind: "mic" | "loopback" | "voice", name: string): Promise<Result>;
@@ -55,6 +56,7 @@ export const api: PyApi = {
   set_languages: call("set_languages"),
   set_output: call("set_output"),
   set_voice: call("set_voice"),
+  set_continuous: call("set_continuous"),
   send_text: call("send_text"),
   list_devices: call("list_devices"),
   set_device: call("set_device"),

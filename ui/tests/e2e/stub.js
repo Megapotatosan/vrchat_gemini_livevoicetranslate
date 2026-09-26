@@ -3,10 +3,10 @@
   const snapshot = {
     running: false, direction: "mine", source_lang: "zh-Hant", target_lang: "en", theirs_target: "zh-Hant",
     outputs: { chatbox: true, voice: false }, devices: { mic: "", loopback: "", voice: "" }, ui_language: "en",
-    api_key: { present: true, masked: "AIza…x9Q2" }, voice: "", version: "0.1.0",
+    api_key: { present: true, masked: "AIza…x9Q2" }, voice: "", continuous: true, version: "0.1.0",
   };
   const names = ["start", "stop", "set_direction", "set_languages", "set_output", "send_text", "set_device",
-    "set_api_key", "clear_api_key", "set_voice", "set_ui_language", "export_logs", "open_url", "log_ui_error"];
+    "set_api_key", "clear_api_key", "set_voice", "set_continuous", "set_ui_language", "export_logs", "open_url", "log_ui_error"];
   window.__calls = [];
   const api = {};
   for (const name of names) {

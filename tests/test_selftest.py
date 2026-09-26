@@ -1,6 +1,7 @@
 import wave
 
 import numpy as np
+import pytest
 
 from livetranslate.audio.gate import frame_dbfs
 from livetranslate.selftest import run_self_test
@@ -24,9 +25,13 @@ def loud(frame):
     return frame_dbfs(frame) > -40
 
 
-async def test_self_test_passes_with_fake_gemini(tmp_path):
-    ok, text = await run_self_test(wav=speech_wav(tmp_path), settings=Settings(),
-                                   connect=FakeConnect([FakeConnection(load("live_basic.json"))]), timeout_s=5,
+@pytest.mark.parametrize("continuous", [True, False])
+async def test_self_test_passes_with_fake_gemini(tmp_path, continuous):
+    settings = Settings()
+    settings.gemini.continuous = continuous
+    # The real model translates while audio streams; in gated mode the fake answers after audio_stream_end.
+    conn = FakeConnection(load("live_basic.json"), respond_after_end=not continuous)
+    ok, text = await run_self_test(wav=speech_wav(tmp_path), settings=settings, connect=FakeConnect([conn]), timeout_s=5,
                                    is_speech=loud, realtime=False)
     assert (ok, text) == (True, "Hi, I'm Hui.")
 

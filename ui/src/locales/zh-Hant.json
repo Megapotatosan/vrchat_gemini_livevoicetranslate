@@ -94,7 +94,9 @@
     "exported": "已儲存至 {{path}}",
     "version": "版本 {{version}}",
     "voice_name": "說話聲音",
-    "voice_auto": "自動（跟隨你的聲音）"
+    "voice_auto": "自動（跟隨你的聲音）",
+    "continuous": "持續串流音訊",
+    "continuous_hint": "建議開啟。Gemini 會聽到所有聲音並自行判斷斷句。關閉後只送出說話的部分：費用較低，但句子可能被切斷。"
   },
   "lang": {
     "en": "英文",

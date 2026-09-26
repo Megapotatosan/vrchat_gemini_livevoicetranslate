@@ -11,6 +11,7 @@
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn.wide { padding-block: 7px; }
 .hr { height: 1px; background: var(--d-850); }
+.field-hint { margin: -6px 0 0 170px; font-size: 11px; color: var(--text-faint); }
 .note { margin: 0; font-size: 12px; }
 .note.ok { color: var(--primary-300); }
 .note.bad { color: #e07a7d; }
