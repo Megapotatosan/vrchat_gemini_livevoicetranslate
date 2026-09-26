@@ -13,3 +13,9 @@ def test_pyinstaller_args_bundle_ui_and_assets():
     args = build.pyinstaller_args(";")
     assert "--onefile" in args and "--windowed" in args and args[args.index("--name") + 1] == "LiveTranslate"
     assert "ui/dist;ui/dist" in args and "assets;assets" in args and args[-1] == "livetranslate/__main__.py"
+
+
+def test_project_hooks_are_used():
+    args = build.pyinstaller_args(";")
+    assert args[args.index("--additional-hooks-dir") + 1] == "scripts/pyinstaller_hooks"
+    assert (Path(build.ROOT) / "scripts/pyinstaller_hooks/hook-webrtcvad.py").exists()

@@ -14,7 +14,8 @@ ROOT = Path(__file__).resolve().parent.parent
 def pyinstaller_args(sep: str) -> list[str]:
     return ["--noconfirm", "--onefile", "--windowed", "--name", "LiveTranslate", "--icon", "assets/app.ico",
             "--add-data", f"ui/dist{sep}ui/dist", "--add-data", f"assets{sep}assets",
-            "--collect-submodules", "webview", "livetranslate/__main__.py"]
+            "--collect-submodules", "webview", "--additional-hooks-dir", "scripts/pyinstaller_hooks",
+            "livetranslate/__main__.py"]
 
 
 def main() -> int:
