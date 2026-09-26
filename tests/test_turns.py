@@ -29,7 +29,7 @@ def test_finalise_and_new_turn(rec):
 
 def test_silence_fallback(rec, clock):
     t, msgs, _ = rec
-    t.add_translation("A")
+    t.add_translation("A.")
     clock.advance(2.9)
     t.poll()
     assert not msgs[-1].final
@@ -53,3 +53,36 @@ def test_finalise_without_turn_is_noop(rec):
     t.finalise()
     t.poll()
     assert msgs == [] and fin == []
+
+
+def test_sentence_cut_mid_word_is_not_finalised_at_3s(rec, clock):
+    # Real case: Gemini held back "語。" until the speaker resumed; the bubble must not close on "日".
+    t, msgs, _ = rec
+    t.add_source("你現在聽到的其實我在講中文,但是你可以聽到日")
+    t.add_translation("今お聞きいただいているのは、実は中国語ですが、日本語")
+    clock.advance(5.0)
+    t.poll()
+    assert not msgs[-1].final
+    t.add_source("語。")
+    t.add_translation("も聞こえます。")
+    assert msgs[-1].source.endswith("聽到日語。") and msgs[-1].translation.endswith("日本語も聞こえます。")
+    assert len({m.id for m in msgs}) == 1
+
+
+def test_finished_sentence_is_finalised_after_3s(rec, clock):
+    t, msgs, _ = rec
+    t.add_translation("テストします。")
+    clock.advance(3.0)
+    t.poll()
+    assert msgs[-1].final
+
+
+def test_unfinished_sentence_is_finalised_after_long_silence(rec, clock):
+    t, msgs, _ = rec
+    t.add_translation("今お聞きいただいているのは")
+    clock.advance(7.9)
+    t.poll()
+    assert not msgs[-1].final
+    clock.advance(0.1)
+    t.poll()
+    assert msgs[-1].final

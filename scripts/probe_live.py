@@ -2,8 +2,11 @@
 
 Usage (needs GEMINI_API_KEY):
     python scripts/probe_live.py [--wav FILE] [--languages zh-Hant,zh-TW] [--all-languages]
+    python scripts/probe_live.py --voices Kore,Puck [--save-audio DIR]
 
 Without --wav it records 5 seconds from the default microphone. Paste the report it prints.
+--voices compares voices: the first language runs once with the model's default voice, then once per named
+voice, and each run's translated speech is saved as a WAV file (default folder: probe_audio) to listen to.
 """
 
 from __future__ import annotations
@@ -25,6 +28,7 @@ DEFAULT_LANGUAGES = "zh-Hant,zh-TW,zh-Hans,zh-CN,fil,tl,ms"
 FINISH_LIMIT_S = 3.0
 COLLECT_S = 10.0
 FRAME_SAMPLES = 320  # 20 ms at 16 kHz
+OUTPUT_RATE = 24000  # the Live API returns 24 kHz mono int16
 
 
 @dataclass
@@ -56,6 +60,41 @@ def analyze(msgs: list[TimedMessage]) -> dict[str, str]:
         "A7": _pf(any(m.kind == "resumption" and m.handle for m in msgs)),
         "max_gap_s": f"{max(gaps, default=0.0):.2f}",
     }
+
+
+def probe_config(code: str, voice: str | None):
+    from google.genai import types
+
+    speech = None
+    if voice:
+        speech = types.SpeechConfig(voice_config=types.VoiceConfig(
+            prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice)))
+    return types.LiveConnectConfig(
+        response_modalities=[types.Modality.AUDIO],
+        translation_config=types.TranslationConfig(target_language_code=code, echo_target_language=False),
+        input_audio_transcription=types.AudioTranscriptionConfig(),
+        output_audio_transcription=types.AudioTranscriptionConfig(),
+        session_resumption=types.SessionResumptionConfig(),
+        speech_config=speech,
+    )
+
+
+def voice_runs(codes: list[str], voices: list[str]) -> list[tuple[str, str | None]]:
+    """With voices: the first language with the default voice, then with each voice. Otherwise every language."""
+    if voices:
+        return [(codes[0], None)] + [(codes[0], v) for v in voices]
+    return [(c, None) for c in codes]
+
+
+def write_wav(path: Path, pcm: bytes, rate: int = OUTPUT_RATE) -> Path:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(pcm)
+    return path
 
 
 def _load_audio(wav: Path | None) -> bytes:
@@ -101,23 +140,28 @@ def _classify(msg) -> list[tuple[str, str, str | None]]:
     return out
 
 
-async def _probe_language(client, model: str, code: str, pcm: bytes) -> tuple[bool, list[TimedMessage]]:
+async def _probe_language(client, model: str, code: str, pcm: bytes, voice: str | None = None,
+                          save_dir: Path | None = None) -> tuple[bool, list[TimedMessage]]:
     from google.genai import types
 
-    config = types.LiveConnectConfig(
-        response_modalities=[types.Modality.AUDIO],
-        translation_config=types.TranslationConfig(target_language_code=code, echo_target_language=False),
-        input_audio_transcription=types.AudioTranscriptionConfig(),
-        output_audio_transcription=types.AudioTranscriptionConfig(),
-        session_resumption=types.SessionResumptionConfig(),
-    )
+    config = probe_config(code, voice)
     msgs: list[TimedMessage] = []
+    audio = bytearray()
+    label = f"{code}/{voice or 'default'}" if save_dir else code
     t0 = time.monotonic()
 
     def log(kind: str, text: str = "", handle: str | None = None) -> None:
         m = TimedMessage(round(time.monotonic() - t0, 3), kind, text, handle)
         msgs.append(m)
-        print(json.dumps({"lang": code, **m.__dict__}, ensure_ascii=False))
+        if kind != "audio":  # audio arrives every 250 ms; summarised after the run instead
+            print(json.dumps({"lang": label, **m.__dict__}, ensure_ascii=False))
+
+    def save_audio() -> None:
+        chunks = sum(1 for m in msgs if m.kind == "audio")
+        line = f"[{label}] audio: {chunks} chunks, {len(audio) / 2 / OUTPUT_RATE:.1f} s"
+        if save_dir is not None and audio:
+            line += f" -> {write_wav(Path(save_dir) / f'{code}_{voice or "default"}.wav', bytes(audio))}"
+        print(line)
 
     try:
         async with client.aio.live.connect(model=model, config=config) as session:
@@ -127,6 +171,11 @@ async def _probe_language(client, model: str, code: str, pcm: bytes) -> tuple[bo
                     async for msg in session.receive():
                         for kind, text, handle in _classify(msg):
                             log(kind, text, handle)
+                        sc = msg.server_content
+                        if sc is not None and sc.model_turn and sc.model_turn.parts:
+                            for part in sc.model_turn.parts:
+                                if part.inline_data and part.inline_data.data:
+                                    audio.extend(part.inline_data.data)
 
             recv = asyncio.create_task(receiver())
             step = FRAME_SAMPLES * 2
@@ -138,9 +187,11 @@ async def _probe_language(client, model: str, code: str, pcm: bytes) -> tuple[bo
             log("audio_stream_end")
             await asyncio.sleep(COLLECT_S)
             recv.cancel()
+        save_audio()
         return True, msgs
     except Exception as exc:  # report every failure, keep probing other languages
         log("error", f"{type(exc).__name__}: {exc}")
+        save_audio()
         return False, msgs
 
 
@@ -161,14 +212,18 @@ async def _main(args: argparse.Namespace) -> int:
     else:
         codes = [c.strip() for c in args.languages.split(",") if c.strip()]
 
-    results: dict[str, tuple[bool, list[TimedMessage]]] = {}
-    for code in codes:
-        results[code] = await _probe_language(client, args.model, code, pcm)
+    voices = [v.strip() for v in (args.voices or "").split(",") if v.strip()]
+    save_dir = args.save_audio or (Path("probe_audio") if voices else None)
+    runs = voice_runs(codes, voices)
+    results: dict[tuple[str, str | None], tuple[bool, list[TimedMessage]]] = {}
+    for code, voice in runs:
+        results[(code, voice)] = await _probe_language(client, args.model, code, pcm, voice, save_dir)
 
-    first_ok, first_msgs = results[codes[0]]
+    first_ok, first_msgs = results[runs[0]]
     report = {"A1": _pf(first_ok), **analyze(first_msgs)}
-    for code, (ok, msgs) in results.items():
-        report[f"A6[{code}]"] = _pf(ok and any(m.kind == "output_tx" for m in msgs))
+    for (code, voice), (ok, msgs) in results.items():
+        key = f"voice[{voice or 'default'}]" if voices else f"A6[{code}]"
+        report[key] = _pf(ok and any(m.kind == "output_tx" for m in msgs))
     try:
         names = [m.name.removeprefix("models/") for m in client.models.list()]
         report["A8"] = _pf(args.text_model in names)
@@ -190,6 +245,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--text-model", default=DEFAULT_TEXT_MODEL)
     p.add_argument("--languages", default=DEFAULT_LANGUAGES, help="comma-separated target codes to try")
     p.add_argument("--all-languages", action="store_true", help="try every language in the app's list")
+    p.add_argument("--voices", help="comma-separated voice names to compare with the default, e.g. Kore,Puck")
+    p.add_argument("--save-audio", type=Path, help="folder for the translated speech WAV files")
     return asyncio.run(_main(p.parse_args(argv)))
 
 

@@ -55,3 +55,16 @@ The model streamed translated audio without pause: one 12,000-byte chunk (250 ms
 - `final_silence_s` stays at 3.0 s: the measured gaps (at most 0.49 s) are well under it.
 - No language-code mapping changes: every candidate code was accepted, so `languages.GEMINI_CODES` stays the identity.
 - The default text model `gemini-3.1-flash-lite` stays.
+
+## Found in real use: sentences split mid-word
+
+In the app, bubbles (and the translated voice) split mid-word, e.g. 「…可以聽到日」 | 「語。為什麼…」 and
+「…日本語」 | 「も聞こえます…」. Cause: the speech gate closed after a 0.8 s pause and sent `audio_stream_end`;
+the model then held back the unfinished end of the sentence (as in the cut-off probe run above) until the speaker
+continued, and the 3 s silence fallback closed the bubble in the meantime.
+
+Fix (settings version 2):
+- The speech gate keeps sending audio through pauses of up to 2.5 s (`gate.hangover_ms`, was 0.8 s), so Gemini
+  decides where sentences end. Saved settings still at the old 800 ms are migrated.
+- A bubble closes after `final_silence_s` (3 s) only when the translation ends like a sentence (。．.！!？?…);
+  otherwise it waits `unterminated_silence_s` (8 s), so a held-back ending joins the same bubble.

@@ -146,3 +146,20 @@ async def test_audio_turn_follows_bubbles_when_no_turn_complete(make_session):
     s._dispatch(text_msg)
     s._dispatch(audio_msg)
     assert [tid for tid, _ in audio] == ["a0", "a1"]
+
+
+def test_build_config_voice():
+    assert build_config("en", None).speech_config is None
+    c = build_config("en", None, voice="Kore")
+    assert c.speech_config.voice_config.prebuilt_voice_config.voice_name == "Kore"
+
+
+async def test_session_connects_with_its_voice():
+    conn = FakeConnect([FakeConnection([])])
+    turns = TurnAssembler("mine", lambda m: None, lambda f: None)
+    s = LiveSession(connect=conn, model="m", target_code="en", turns=turns, on_status=lambda e: None, voice="Puck")
+    task = asyncio.create_task(s.run())
+    await wait_for(lambda: s.connected, 1)
+    await s.stop()
+    task.cancel()
+    assert conn.calls[0][1].speech_config.voice_config.prebuilt_voice_config.voice_name == "Puck"

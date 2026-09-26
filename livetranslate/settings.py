@@ -39,7 +39,9 @@ class DeviceSettings(_Model):
 class GeminiSettings(_Model):
     live_model: str = "gemini-3.5-live-translate-preview"
     text_model: str = "gemini-3.1-flash-lite"
-    final_silence_s: float = 3.0
+    voice: str = ""  # "" = the translate model's own voice; otherwise a name from gemini/voices.py
+    final_silence_s: float = 3.0  # quiet time before a finished sentence's bubble closes
+    unterminated_silence_s: float = 8.0  # the same for a sentence without ending punctuation
     max_new_sessions_per_minute: int = 4
     reconnect_backoff: list[float] = Field(default_factory=lambda: [2, 5, 10, 30])
     text_timeout_s: float = 20.0
@@ -50,7 +52,7 @@ class GateSettings(_Model):
     energy_floor_dbfs: float = -50.0
     open_ms: int = 200
     preroll_ms: int = 300
-    hangover_ms: int = 800
+    hangover_ms: int = 2500  # keep sending audio through pauses this long, so Gemini decides sentence ends
 
 
 class ChatboxSettings(_Model):
@@ -77,8 +79,11 @@ class LoggingSettings(_Model):
     debug_transcripts: bool = False
 
 
+SETTINGS_VERSION = 2
+
+
 class Settings(_Model):
-    version: int = 1
+    version: int = SETTINGS_VERSION
     ui: UiSettings = Field(default_factory=UiSettings)
     devices: DeviceSettings = Field(default_factory=DeviceSettings)
     gemini: GeminiSettings = Field(default_factory=GeminiSettings)
@@ -97,7 +102,10 @@ class SettingsStore:
         if not self.path.exists():
             return Settings(), None
         try:
-            return Settings.model_validate_json(self.path.read_text(encoding="utf-8")), None
+            settings = Settings.model_validate_json(self.path.read_text(encoding="utf-8"))
+            if settings.version < SETTINGS_VERSION:
+                self.save(_migrate(settings))
+            return settings, None
         except (ValidationError, ValueError, OSError) as exc:
             log.warning("settings file is damaged, resetting: %s", exc)
             os.replace(self.path, self.path.with_name(self.path.name + ".broken"))
@@ -114,6 +122,16 @@ class SettingsStore:
         except OSError:
             tmp.unlink(missing_ok=True)
             raise
+
+
+def _migrate(settings: Settings) -> Settings:
+    """Bring an older settings file up to date, keeping values the user changed."""
+    if settings.version < 2:
+        # v2: the speech gate waits 2.5 s (was 0.8 s) so short pauses don't cut sentences in half.
+        if settings.gate.hangover_ms == 800:
+            settings.gate.hangover_ms = 2500
+    settings.version = SETTINGS_VERSION
+    return settings
 
 
 def default_store() -> SettingsStore:

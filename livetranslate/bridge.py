@@ -10,6 +10,7 @@ from concurrent.futures import TimeoutError as FutureTimeout
 from pathlib import Path
 from typing import Any
 
+from livetranslate.gemini.voices import VOICES
 from livetranslate.languages import TRANSLATION_LANGS, UI_LANGS
 
 log = logging.getLogger(__name__)
@@ -66,6 +67,11 @@ class Bridge:
         if name not in ("chatbox", "voice") or not isinstance(on, bool):
             return BAD
         return self._call("set_output", name, on)
+
+    def set_voice(self, voice: str) -> dict[str, Any]:
+        if voice != "" and voice not in VOICES:
+            return BAD
+        return self._call("set_voice", voice)
 
     def send_text(self, text: str) -> dict[str, Any]:
         if not isinstance(text, str) or len(text) > MAX_TEXT:

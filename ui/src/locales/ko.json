@@ -92,7 +92,9 @@
     "logs": "로그",
     "export": "로그 압축 파일 내보내기…",
     "exported": "{{path}}에 저장했습니다",
-    "version": "버전 {{version}}"
+    "version": "버전 {{version}}",
+    "voice_name": "말하는 목소리",
+    "voice_auto": "자동 (내 목소리에 맞춤)"
   },
   "lang": {
     "en": "영어",

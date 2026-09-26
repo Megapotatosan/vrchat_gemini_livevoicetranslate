@@ -16,6 +16,7 @@ import numpy as np
 from livetranslate.audio.devices import DeviceInfo, resolve_device
 
 FRAME_BYTES = 640  # 20 ms of 16 kHz mono int16
+TRAILING_SILENCE_FRAMES = 175  # 3.5 s: longer than the speech gate's 2.5 s pause, so the gate closes
 TARGET_RATE = 16000
 
 log = logging.getLogger(__name__)
@@ -176,7 +177,7 @@ def read_wav_frames(path: Path) -> list[bytes]:
 
 
 class WavSource:
-    """Plays a WAV file into the pipeline, then 1 s of silence so the speech gate closes."""
+    """Plays a WAV file into the pipeline, then enough silence for the speech gate to close."""
 
     def __init__(self, path: Path, queue: FrameQueue, realtime: bool = True) -> None:
         self.path = Path(path)
@@ -186,7 +187,7 @@ class WavSource:
         self._thread: threading.Thread | None = None
 
     def start(self) -> tuple[str, bool]:
-        frames = read_wav_frames(self.path) + [bytes(FRAME_BYTES)] * 50
+        frames = read_wav_frames(self.path) + [bytes(FRAME_BYTES)] * TRAILING_SILENCE_FRAMES
 
         def run() -> None:
             for frame in frames:

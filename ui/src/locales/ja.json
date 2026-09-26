@@ -92,7 +92,9 @@
     "logs": "ログ",
     "export": "ログをアーカイブとして書き出す…",
     "exported": "{{path}} に保存しました",
-    "version": "バージョン {{version}}"
+    "version": "バージョン {{version}}",
+    "voice_name": "話す声",
+    "voice_auto": "自動（あなたの声に合わせる）"
   },
   "lang": {
     "en": "英語",

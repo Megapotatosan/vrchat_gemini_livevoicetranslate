@@ -242,3 +242,16 @@ async def test_device_list_refreshes_only_when_idle(ctl_factory):
     await c.start()
     await c.list_devices()
     assert seen == [True, False]
+
+
+async def test_set_voice_persists_and_restarts_only_mine(ctl_factory):
+    c, deps = ctl_factory()
+    assert await c.set_voice("Robot") == {"ok": False, "error": "errors.bad_argument"}
+    await c.set_direction("both")
+    await c.start()
+    mine, theirs = deps.pipelines
+    assert await c.set_voice("Kore") == {"ok": True}
+    assert deps.store.load()[0].gemini.voice == "Kore" and c.snapshot()["voice"] == "Kore"
+    assert mine.stopped and not theirs.stopped and deps.pipelines[-1].side == "mine"
+    assert await c.set_voice("") == {"ok": True}
+    assert c.snapshot()["voice"] == ""

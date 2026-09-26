@@ -53,7 +53,7 @@ def test_energy_floor_overrides_vad():
 
 def test_from_settings():
     g = SpeechGate.from_settings(GateSettings(), speech)
-    assert (g.window_frames, g.open_frames, g.preroll_frames, g.hangover_frames) == (10, 8, 15, 40)
+    assert (g.window_frames, g.open_frames, g.preroll_frames, g.hangover_frames) == (10, 8, 15, 125)
 
 
 def test_dbfs():

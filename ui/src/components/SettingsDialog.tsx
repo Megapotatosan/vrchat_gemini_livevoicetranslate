@@ -4,6 +4,7 @@ import { api, type DeviceLists } from "../bridge";
 import { initI18n } from "../i18n";
 import { UI_LANGS } from "../languages";
 import type { Snapshot } from "../state";
+import { VOICES } from "../voices";
 import "./SettingsDialog.css";
 
 type Kind = "mic" | "loopback" | "voice";
@@ -86,6 +87,15 @@ export default function SettingsDialog({ snap, open, onClose }: { snap: Snapshot
         {deviceRow("mic", t("settings.mic"), t("settings.auto_mic"), devices.inputs)}
         {deviceRow("loopback", t("settings.loopback"), t("settings.auto_loopback"), devices.loopbacks)}
         {deviceRow("voice", t("settings.voice_out"), t("settings.auto_voice"), devices.outputs)}
+        <div className="field">
+          <label htmlFor="voice-name">{t("settings.voice_name")}</label>
+          <span className="ctl">
+            <select id="voice-name" value={snap.voice} onChange={(e) => void api.set_voice(e.target.value)}>
+              <option value="">{t("settings.voice_auto")}</option>
+              {VOICES.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </span>
+        </div>
         <div className="hr" />
         <div className="field">
           <label htmlFor="ui-lang">{t("settings.ui_language")}</label>

@@ -45,6 +45,10 @@ VRChat 即時語音翻譯，使用 Google Gemini Live API。
 
 這樣其他玩家只會聽到翻譯，不會聽到你原本的聲音。
 
+**說話聲音**（⚙ 設定）決定翻譯用哪個聲音說出來。「自動」會讓 Gemini 跟隨你自己的聲音；也可以選擇 Gemini 的 30 種
+聲音之一（Kore、Puck、Charon…）。想先聽聽差別，可以執行 `python scripts/probe_live.py --voices Kore,Puck`，
+再播放它存在 `probe_audio/` 資料夾中的 WAV 檔。
+
 ## 設定檔
 
 設定存放在 `%APPDATA%\LiveTranslate\settings.json`，日誌在 `%APPDATA%\LiveTranslate\logs`。

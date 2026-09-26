@@ -17,6 +17,7 @@ from livetranslate.audio.voice_output import VoiceOutput, pick_voice_device
 from livetranslate.credentials import KeyStore, mask
 from livetranslate.events import MessageEvent, Side, StateEvent, StatsEvent, StatusEvent, TurnFinished
 from livetranslate.gemini.text_translate import TextTranslator, TranslateError
+from livetranslate.gemini.voices import VOICES
 from livetranslate.languages import (
     TRANSLATION_LANGS, UI_LANGS, default_languages, default_ui_language, gemini_code, theirs_target,
 )
@@ -90,6 +91,7 @@ class Controller:
             "outputs": {"chatbox": ui.chatbox, "voice": ui.voice},
             "devices": self._settings.devices.model_dump(), "ui_language": ui.language,
             "api_key": {"present": key is not None, "masked": mask(key) if key else None},
+            "voice": self._settings.gemini.voice,
             "version": __version__,
         }
 
@@ -259,6 +261,18 @@ class Controller:
             self._save()
             if self._target("theirs") != before:
                 await self._restart("theirs")
+            self._emit_state()
+            return OK
+
+    async def set_voice(self, voice: str) -> Result:
+        """Voice for my translated speech; "" lets the model choose. Only my direction produces voice."""
+        if voice != "" and voice not in VOICES:
+            return _error("errors.bad_argument")
+        async with self._lock:
+            if voice != self._settings.gemini.voice:
+                self._settings.gemini.voice = voice
+                self._save()
+                await self._restart("mine")
             self._emit_state()
             return OK
 
