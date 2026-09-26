@@ -1,7 +1,8 @@
 # Gemini Live probe results
 
-Run on 2026-09-26 on Windows with `python scripts/probe_live.py` (5 s recorded from the mic, spoken in Cantonese).
-Only the `zh-Hant` session was captured; the other language codes and the summary block are still to be recorded.
+Two runs on 2026-09-26 on Windows with `python scripts/probe_live.py` (5 s recorded from the mic, spoken in
+Cantonese). The `zh-Hant`, `zh-TW` and `zh-Hans` sessions were captured; `zh-CN`, `fil`, `tl`, `ms` and the summary
+block (including A8) are still to be recorded.
 
 ## What the `zh-Hant` session showed
 
@@ -12,10 +13,19 @@ Only the `zh-Hant` session was captured; the other language codes and the summar
 | A3 source text (input transcription) returned | PASS | `input_tx` "你聽唔聽到我講咩啊?" at 8.58 s |
 | A4 `turn_complete` marks sentence ends | **FAIL** | None received in the 10 s after the audio ended |
 | A5 finishes promptly after `audio_stream_end` | PASS in effect | Translation arrived 0.24 s after the signal, even without `turn_complete` |
-| A6 `zh-Hant` accepted as target code | PASS | Traditional Chinese output |
+| A6 `zh-Hant` accepted as target code | PASS | Traditional output "你做一個基本" |
+| A6 `zh-TW` accepted | PASS | Same Traditional output; no mapping change needed |
+| A6 `zh-Hans` accepted | PASS | Simplified output "你做一个基本" |
 | A7 session resumption | PASS | `session_resumption_update` handles at 6.48 s and 9.64 s |
 | A8 text model exists | not captured | |
 | Longest gap between transcript chunks | 0.49 s | One chunk each way |
+
+## Cut-off speech is not flushed
+
+In the second run the recording ended mid-word ("你做一個基本嘅測…"). The model translated up to "你做一個基本" and
+held back the unfinished tail even after `audio_stream_end`. In the first run the sentence was complete and was
+translated in full. In the app the speech gate only closes after 800 ms of silence, so utterances end naturally;
+no code change.
 
 ## Unexpected: continuous audio output
 
