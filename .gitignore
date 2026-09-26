@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.egg-info/
+dist/
+build/
+*.spec
+ui/node_modules/
+ui/dist/
+ui/test-results/
+ui/playwright-report/
+.superpowers/
