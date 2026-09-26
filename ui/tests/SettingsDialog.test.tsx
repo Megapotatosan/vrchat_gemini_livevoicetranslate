@@ -34,3 +34,12 @@ test("closes on Escape and backdrop; hidden when closed", async () => {
   rerender(<SettingsDialog snap={snap} open={false} onClose={onClose} />);
   expect(screen.queryByRole("dialog")).toBeNull();
 });
+
+test("speaking voice picker", async () => {
+  render(<SettingsDialog snap={{ ...snap, voice: "" }} open onClose={() => {}} />);
+  const select = screen.getByLabelText("Speaking voice");
+  expect(select).toHaveValue("");
+  expect(screen.getByRole("option", { name: "Automatic (follows your voice)" })).toBeInTheDocument();
+  await userEvent.selectOptions(select, "Kore");
+  expect(api.set_voice).toHaveBeenCalledWith("Kore");
+});

@@ -40,13 +40,18 @@ def gemini_connect(api_key: str) -> ConnectFn:
     return connect
 
 
-def build_config(target_code: str, handle: str | None) -> types.LiveConnectConfig:
+def build_config(target_code: str, handle: str | None, voice: str | None = None) -> types.LiveConnectConfig:
+    speech = None
+    if voice:
+        speech = types.SpeechConfig(voice_config=types.VoiceConfig(
+            prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice)))
     return types.LiveConnectConfig(
         response_modalities=[types.Modality.AUDIO],
         translation_config=types.TranslationConfig(target_language_code=target_code, echo_target_language=False),
         input_audio_transcription=types.AudioTranscriptionConfig(),
         output_audio_transcription=types.AudioTranscriptionConfig(),
         session_resumption=types.SessionResumptionConfig(handle=handle),
+        speech_config=speech,
     )
 
 
@@ -81,8 +86,9 @@ class LiveSession:
     def __init__(self, *, connect: ConnectFn, model: str, target_code: str, turns: TurnAssembler,
                  on_status: Callable[[StatusEvent], None], on_audio: Callable[[str, bytes], None] | None = None,
                  budget: ConnectionBudget | None = None, backoff: Backoff | None = None,
-                 sleep: Callable[[float], Awaitable[None]] = asyncio.sleep) -> None:
+                 sleep: Callable[[float], Awaitable[None]] = asyncio.sleep, voice: str | None = None) -> None:
         self._connect = connect
+        self._voice = voice or None
         self._model = model
         self._target = target_code
         self._turns = turns
@@ -210,7 +216,7 @@ class LiveSession:
 
     async def _connection(self, handle: str | None, ready: asyncio.Event) -> asyncio.Task | None:
         """Own one connection. Returns the replacement task after a go_away hand-over, else None."""
-        async with self._connect(self._model, build_config(self._target, handle)) as conn:
+        async with self._connect(self._model, build_config(self._target, handle, self._voice)) as conn:
             self._conn = conn
             self._connected.set()
             ready.set()

@@ -117,3 +117,13 @@ async def test_build_pipeline_uses_the_given_budget():
     p = build_pipeline("mine", settings=Settings(), target_code="en", connect=FakeConnect([]),
                        source=FakeSource([]), emit=lambda e: None, budget=budget)
     assert p._session._budget is budget
+
+
+async def test_voice_setting_applies_to_my_speech_only():
+    s = Settings()
+    s.gemini.voice = "Kore"
+    mine = build_pipeline("mine", settings=s, target_code="en", connect=FakeConnect([]), source=FakeSource([]),
+                          emit=lambda e: None)
+    theirs = build_pipeline("theirs", settings=s, target_code="en", connect=FakeConnect([]), source=FakeSource([]),
+                            emit=lambda e: None)
+    assert mine._session._voice == "Kore" and theirs._session._voice is None

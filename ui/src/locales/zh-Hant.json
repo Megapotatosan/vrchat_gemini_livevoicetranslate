@@ -92,7 +92,9 @@
     "logs": "日誌",
     "export": "匯出日誌壓縮檔…",
     "exported": "已儲存至 {{path}}",
-    "version": "版本 {{version}}"
+    "version": "版本 {{version}}",
+    "voice_name": "說話聲音",
+    "voice_auto": "自動（跟隨你的聲音）"
   },
   "lang": {
     "en": "英文",

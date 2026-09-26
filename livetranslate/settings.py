@@ -39,6 +39,7 @@ class DeviceSettings(_Model):
 class GeminiSettings(_Model):
     live_model: str = "gemini-3.5-live-translate-preview"
     text_model: str = "gemini-3.1-flash-lite"
+    voice: str = ""  # "" = the translate model's own voice; otherwise a name from gemini/voices.py
     final_silence_s: float = 3.0
     max_new_sessions_per_minute: int = 4
     reconnect_backoff: list[float] = Field(default_factory=lambda: [2, 5, 10, 30])

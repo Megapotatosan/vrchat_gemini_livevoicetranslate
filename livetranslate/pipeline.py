@@ -115,6 +115,7 @@ def build_pipeline(side: Side, *, settings: Settings, target_code: str, connect:
     session = LiveSession(connect=connect, model=g.live_model, target_code=target_code, turns=turns,
                           on_status=on_status, on_audio=voice_sink if side == "mine" else None,
                           budget=budget or ConnectionBudget(g.max_new_sessions_per_minute),
-                          backoff=Backoff(g.reconnect_backoff))
+                          backoff=Backoff(g.reconnect_backoff),
+                          voice=g.voice if side == "mine" else None)
     gate = SpeechGate.from_settings(settings.gate, is_speech or make_webrtc_vad(settings.gate.vad_aggressiveness))
     return Pipeline(side, source=source, gate=gate, session=session, turns=turns, emit=emit, on_gate=on_gate)

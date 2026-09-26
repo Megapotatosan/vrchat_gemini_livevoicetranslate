@@ -45,6 +45,10 @@ You can also set the `GEMINI_API_KEY` environment variable instead.
 
 Other players then hear only the translation, not your own voice.
 
+**Speaking voice** (⚙ Settings) picks the voice the translation is spoken in. "Automatic" lets Gemini follow your
+own voice; or choose one of Gemini's 30 named voices (Kore, Puck, Charon…). To hear the difference first, run
+`python scripts/probe_live.py --voices Kore,Puck` and listen to the WAV files it saves in `probe_audio/`.
+
 ## Settings file
 
 Settings live in `%APPDATA%\LiveTranslate\settings.json`, logs in `%APPDATA%\LiveTranslate\logs`.

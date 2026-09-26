@@ -92,7 +92,9 @@
     "logs": "Logs",
     "export": "Export log archive…",
     "exported": "Saved to {{path}}",
-    "version": "Version {{version}}"
+    "version": "Version {{version}}",
+    "voice_name": "Speaking voice",
+    "voice_auto": "Automatic (follows your voice)"
   },
   "lang": {
     "en": "English",

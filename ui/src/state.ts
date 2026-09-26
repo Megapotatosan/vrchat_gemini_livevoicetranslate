@@ -11,6 +11,7 @@ export interface Snapshot {
   devices: { mic: string; loopback: string; voice: string };
   ui_language: string;
   api_key: { present: boolean; masked: string | null };
+  voice: string;
   version: string;
 }
 
