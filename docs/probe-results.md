@@ -1,10 +1,22 @@
 # Gemini Live probe results
 
 Two runs on 2026-09-26 on Windows with `python scripts/probe_live.py` (5 s recorded from the mic, spoken in
-Cantonese). The `zh-Hant`, `zh-TW` and `zh-Hans` sessions were captured; `zh-CN`, `fil`, `tl`, `ms` and the summary
-block (including A8) are still to be recorded.
+Cantonese). The second run covered every candidate code and printed the summary report below.
 
-## What the `zh-Hant` session showed
+## Summary report (second run)
+
+```
+model=gemini-3.5-live-translate-preview text_model=gemini-3.1-flash-lite
+A1: PASS  A2: PASS  A3: PASS  A4: FAIL  A5: FAIL  A7: PASS  max_gap_s: 0.27
+A6[zh-Hant]: PASS  A6[zh-TW]: PASS  A6[zh-Hans]: PASS  A6[zh-CN]: PASS
+A6[fil]: PASS  A6[tl]: PASS  A6[ms]: PASS
+A8: PASS
+```
+
+A5 reads FAIL because the probe requires a `turn_complete` after `audio_stream_end`, and the model never sends
+one (A4). The translated text itself arrived within about 0.3 s of the signal in every session.
+
+## What the sessions showed
 
 | Check (spec §10) | Result | Evidence |
 |---|---|---|
@@ -15,10 +27,12 @@ block (including A8) are still to be recorded.
 | A5 finishes promptly after `audio_stream_end` | PASS in effect | Translation arrived 0.24 s after the signal, even without `turn_complete` |
 | A6 `zh-Hant` accepted as target code | PASS | Traditional output "你做一個基本" |
 | A6 `zh-TW` accepted | PASS | Same Traditional output; no mapping change needed |
-| A6 `zh-Hans` accepted | PASS | Simplified output "你做一个基本" |
+| A6 `zh-Hans`, `zh-CN` accepted | PASS | Simplified output "你做一个基本" |
+| A6 `fil`, `tl` accepted | PASS | "Gumawa ka ng isang" |
+| A6 `ms` accepted | PASS | "Anda buat ujian" |
 | A7 session resumption | PASS | `session_resumption_update` handles at 6.48 s and 9.64 s |
-| A8 text model exists | not captured | |
-| Longest gap between transcript chunks | 0.49 s | One chunk each way |
+| A8 text model `gemini-3.1-flash-lite` exists | PASS | Listed by `models.list()` |
+| Longest gap between transcript chunks | 0.27–0.49 s | Well under `final_silence_s` = 3.0 s |
 
 ## Cut-off speech is not flushed
 
@@ -38,4 +52,6 @@ The model streamed translated audio without pause: one 12,000-byte chunk (250 ms
   The audio sentence id now advances whenever a bubble ends, by either route, instead of only on `turn_complete`.
 - **Continuous audio**: `SilenceTrimmer` keeps pauses up to 500 ms and drops the rest before audio reaches the
   voice buffer, so the delay before other players hear the translation cannot keep growing.
-- `final_silence_s` stays at 3.0 s: the measured gap (0.49 s) is well under it.
+- `final_silence_s` stays at 3.0 s: the measured gaps (at most 0.49 s) are well under it.
+- No language-code mapping changes: every candidate code was accepted, so `languages.GEMINI_CODES` stays the identity.
+- The default text model `gemini-3.1-flash-lite` stays.
