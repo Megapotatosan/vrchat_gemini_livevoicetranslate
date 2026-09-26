@@ -1,0 +1,6 @@
+[
+  {"server_content": {"input_transcription": {"text": "你好，"}}},
+  {"server_content": {"input_transcription": {"text": "我是小慧"}}},
+  {"session_resumption_update": {"new_handle": "h-2", "resumable": true}},
+  {"go_away": {"time_left": "5s"}}
+]
