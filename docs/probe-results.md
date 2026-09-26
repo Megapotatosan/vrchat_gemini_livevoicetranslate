@@ -81,7 +81,8 @@ because the guide lists only the regional codes.
 ## Long sessions
 
 Google documents that an audio-only Live session ends after about 15 minutes unless context window compression
-is on. The app now asks for a sliding window. The translate model's support for it is not confirmed yet (the
-probe's **A9** line checks it). If a model rejects the option, the session reconnects once without it. The app
+is on. The app now asks for a sliding window. A probe run on 2026-09-26 confirmed that the translate model accepts
+it (**A9: PASS**, with A1–A3, A6–A8 also passing). If a model ever rejects the option, the session reconnects
+once without it. The app
 also drops a saved resumption handle when a resume fails, so a session that has reached its limit starts afresh
 instead of retrying the dead handle forever.
