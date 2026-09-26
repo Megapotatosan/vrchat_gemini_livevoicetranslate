@@ -10,6 +10,15 @@ from datetime import datetime
 from livetranslate.events import MessageEvent, Side, TurnFinished
 
 
+_CLOSERS = "」』\"'”’）)]"
+_SENTENCE_ENDS = "。．.！!？?…"
+
+
+def ends_sentence(text: str) -> bool:
+    """True when text ends like a finished sentence (closing quotes/brackets ignored)."""
+    return text.rstrip().rstrip(_CLOSERS).endswith(tuple(_SENTENCE_ENDS))
+
+
 def _clock_text() -> str:
     return datetime.now().strftime("%H:%M:%S")
 
@@ -17,11 +26,13 @@ def _clock_text() -> str:
 class TurnAssembler:
     def __init__(self, side: Side, on_message: Callable[[MessageEvent], None],
                  on_finished: Callable[[TurnFinished], None], *, final_silence_s: float = 3.0,
+                 unterminated_silence_s: float = 8.0,
                  now: Callable[[], float] = time.monotonic, clock_text: Callable[[], str] = _clock_text) -> None:
         self._side = side
         self._on_message = on_message
         self._on_finished = on_finished
         self._final_silence_s = final_silence_s
+        self._unterminated_silence_s = unterminated_silence_s
         self._now = now
         self._clock_text = clock_text
         self.count = 0
@@ -72,5 +83,12 @@ class TurnAssembler:
         self.current_id = None
 
     def poll(self) -> None:
-        if self.current_id is not None and self._now() - self._last_chunk >= self._final_silence_s:
+        """Silence fallback (the live model never sends turn_complete). A finished sentence closes after
+        final_silence_s; an unfinished one waits longer, because the model holds back the end of a sentence
+        until the speaker continues."""
+        if self.current_id is None:
+            return
+        quiet = self._now() - self._last_chunk
+        finished = ends_sentence(self._translation or self._source)
+        if quiet >= (self._final_silence_s if finished else self._unterminated_silence_s):
             self.finalise()

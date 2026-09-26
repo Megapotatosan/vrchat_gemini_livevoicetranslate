@@ -111,7 +111,8 @@ def build_pipeline(side: Side, *, settings: Settings, target_code: str, connect:
             use_chatbox.set_typing(True)
 
     g = settings.gemini
-    turns = TurnAssembler(side, on_message, emit, final_silence_s=g.final_silence_s)
+    turns = TurnAssembler(side, on_message, emit, final_silence_s=g.final_silence_s,
+                          unterminated_silence_s=g.unterminated_silence_s)
     session = LiveSession(connect=connect, model=g.live_model, target_code=target_code, turns=turns,
                           on_status=on_status, on_audio=voice_sink if side == "mine" else None,
                           budget=budget or ConnectionBudget(g.max_new_sessions_per_minute),

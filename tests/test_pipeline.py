@@ -60,7 +60,7 @@ async def test_end_to_end_chatbox_over_udp(osc_server):
     events = []
     p = build_pipeline("mine", settings=s, target_code="en",
                        connect=FakeConnect([FakeConnection(load("live_basic.json"))]),
-                       source=FakeSource([QUIET] * 20 + [LOUD] * 30 + [QUIET] * 50), emit=events.append,
+                       source=FakeSource([QUIET] * 20 + [LOUD] * 30 + [QUIET] * 140), emit=events.append,
                        chatbox=chat, is_speech=lambda f: f == LOUD)
     task = asyncio.create_task(p.run())
     ticker = asyncio.create_task(tick(chat))
@@ -80,7 +80,7 @@ async def test_voice_sink_receives_mine_audio():
     audio = []
     p = build_pipeline("mine", settings=Settings(), target_code="en",
                        connect=FakeConnect([FakeConnection(load("live_basic.json"))]),
-                       source=FakeSource([LOUD] * 10 + [QUIET] * 40), emit=lambda e: None,
+                       source=FakeSource([LOUD] * 10 + [QUIET] * 140), emit=lambda e: None,
                        voice_sink=lambda tid, data: audio.append((tid, data)), is_speech=lambda f: f == LOUD)
     task = asyncio.create_task(p.run())
     await wait_for(lambda: audio, 2)
