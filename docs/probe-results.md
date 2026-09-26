@@ -77,3 +77,12 @@ Google's Live Translate guide describes the model as continuous stream processin
 The speech gate still runs, but only for the chatbox typing indicator. The Settings switch **Stream audio
 continuously** turns this off and restores the speech-gated behaviour above. Portuguese is sent as `pt-BR`,
 because the guide lists only the regional codes.
+
+## Long sessions
+
+Google documents that an audio-only Live session ends after about 15 minutes unless context window compression
+is on. The app now asks for a sliding window. A probe run on 2026-09-26 confirmed that the translate model accepts
+it (**A9: PASS**, with A1–A3, A6–A8 also passing). If a model ever rejects the option, the session reconnects
+once without it. The app
+also drops a saved resumption handle when a resume fails, so a session that has reached its limit starts afresh
+instead of retrying the dead handle forever.

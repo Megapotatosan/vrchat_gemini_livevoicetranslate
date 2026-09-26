@@ -75,6 +75,8 @@ def probe_config(code: str, voice: str | None):
         input_audio_transcription=types.AudioTranscriptionConfig(),
         output_audio_transcription=types.AudioTranscriptionConfig(),
         session_resumption=types.SessionResumptionConfig(),
+        # Same as the app: sessions longer than ~15 minutes need it. A9 passes when the model accepts it.
+        context_window_compression=types.ContextWindowCompressionConfig(sliding_window=types.SlidingWindow()),
         speech_config=speech,
     )
 
@@ -220,7 +222,7 @@ async def _main(args: argparse.Namespace) -> int:
         results[(code, voice)] = await _probe_language(client, args.model, code, pcm, voice, save_dir)
 
     first_ok, first_msgs = results[runs[0]]
-    report = {"A1": _pf(first_ok), **analyze(first_msgs)}
+    report = {"A1": _pf(first_ok), **analyze(first_msgs), "A9": _pf(first_ok)}
     for (code, voice), (ok, msgs) in results.items():
         key = f"voice[{voice or 'default'}]" if voices else f"A6[{code}]"
         report[key] = _pf(ok and any(m.kind == "output_tx" for m in msgs))

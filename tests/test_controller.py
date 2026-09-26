@@ -8,9 +8,10 @@ import pytest
 from livetranslate.audio.devices import DeviceInfo
 from livetranslate.controller import Controller, ControllerDeps
 from livetranslate.credentials import KeyStore
-from livetranslate.events import MessageEvent, StatsEvent, StatusEvent, TurnFinished
+from livetranslate.events import MessageEvent, StateEvent, StatsEvent, StatusEvent, TurnFinished
 from livetranslate.outputs.chatbox import ChatboxSender
 from livetranslate.settings import ChatboxSettings, SettingsStore
+from tests.fakes import wait_for
 
 
 class FakePipeline:
@@ -268,3 +269,26 @@ async def test_set_continuous_persists_and_restarts_running_pipelines(ctl_factor
     assert mine.stopped and theirs.stopped and len(deps.pipelines) == 4
     assert await c.set_continuous(False) == {"ok": True}
     assert len(deps.pipelines) == 4
+
+
+async def test_pipeline_that_dies_alone_is_dropped_and_last_one_stops_running(ctl_factory):
+    c, deps = ctl_factory()
+    await c.set_direction("both")
+    await c.start()
+    mine, theirs = deps.pipelines
+    mine._done.set()  # e.g. the mic failed to open, or Gemini rejected the key
+    await wait_for(lambda: "mine" not in c._pipelines, 1)
+    assert c.snapshot()["running"] is True  # the other direction still translates
+    theirs._done.set()
+    await wait_for(lambda: c.snapshot()["running"] is False, 1)
+    assert StatusEvent("info", "status.stopped") not in deps.events  # the pipeline's error stays visible
+    assert any(isinstance(e, StateEvent) and e.state["running"] is False for e in deps.events)
+    assert await c.start() == {"ok": True} and len(deps.pipelines) == 4
+
+
+async def test_stopping_does_not_report_pipelines_as_dead(ctl_factory):
+    c, deps = ctl_factory()
+    await c.start()
+    await c.stop()
+    await asyncio.sleep(0.05)
+    assert deps.events.count(StatusEvent("info", "status.stopped")) == 1

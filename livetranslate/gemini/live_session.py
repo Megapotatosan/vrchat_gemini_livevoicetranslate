@@ -40,7 +40,8 @@ def gemini_connect(api_key: str) -> ConnectFn:
     return connect
 
 
-def build_config(target_code: str, handle: str | None, voice: str | None = None) -> types.LiveConnectConfig:
+def build_config(target_code: str, handle: str | None, voice: str | None = None,
+                 compression: bool = True) -> types.LiveConnectConfig:
     speech = None
     if voice:
         speech = types.SpeechConfig(voice_config=types.VoiceConfig(
@@ -51,6 +52,9 @@ def build_config(target_code: str, handle: str | None, voice: str | None = None)
         input_audio_transcription=types.AudioTranscriptionConfig(),
         output_audio_transcription=types.AudioTranscriptionConfig(),
         session_resumption=types.SessionResumptionConfig(handle=handle),
+        # Without compression an audio session ends after about 15 minutes; the sliding window lifts that limit.
+        context_window_compression=types.ContextWindowCompressionConfig(sliding_window=types.SlidingWindow())
+        if compression else None,
         speech_config=speech,
     )
 
@@ -82,6 +86,14 @@ def classify_error(exc: BaseException) -> ErrorKind:
     return "network"
 
 
+class _OpenFailed(Exception):
+    """A connection that failed before it was established; cause is the original error."""
+
+    def __init__(self, cause: Exception) -> None:
+        super().__init__(str(cause))
+        self.cause = cause
+
+
 class LiveSession:
     def __init__(self, *, connect: ConnectFn, model: str, target_code: str, turns: TurnAssembler,
                  on_status: Callable[[StatusEvent], None], on_audio: Callable[[str, bytes], None] | None = None,
@@ -89,6 +101,7 @@ class LiveSession:
                  sleep: Callable[[float], Awaitable[None]] = asyncio.sleep, voice: str | None = None) -> None:
         self._connect = connect
         self._voice = voice or None
+        self._compression = True
         self._model = model
         self._target = target_code
         self._turns = turns
@@ -134,6 +147,11 @@ class LiveSession:
                 if self._stopping.is_set():
                     break
                 raise
+            except _OpenFailed as exc:
+                if self._fall_back(exc.cause):
+                    continue
+                if not await self._handle_error(exc.cause):
+                    break
             except Exception as exc:  # noqa: BLE001 - every failure is classified and reported
                 if not await self._handle_error(exc):
                     break
@@ -196,6 +214,20 @@ class LiveSession:
             stopper.cancel()
         return not self._stopping.is_set()
 
+    def _fall_back(self, exc: Exception) -> bool:
+        """After a failed connect, drop what may have caused it and retry at once. False: nothing left to drop."""
+        if self.handle is not None:
+            # An expired or unknown session can't be resumed; a fresh session only loses earlier context.
+            log.info("could not resume the session (%s); starting a new one", exc)
+            self.handle = None
+            return True
+        if self._compression and classify_error(exc) in ("auth", "model"):
+            # A model that doesn't accept context compression rejects the setup like a bad argument.
+            log.warning("connect failed with context compression (%s); retrying without it", exc)
+            self._compression = False
+            return True
+        return False
+
     async def _handle_error(self, exc: BaseException) -> bool:
         """Report the error; returns True when the session should retry."""
         kind = classify_error(exc)
@@ -216,7 +248,16 @@ class LiveSession:
 
     async def _connection(self, handle: str | None, ready: asyncio.Event) -> asyncio.Task | None:
         """Own one connection. Returns the replacement task after a go_away hand-over, else None."""
-        async with self._connect(self._model, build_config(self._target, handle, self._voice)) as conn:
+        try:
+            return await self._own(handle, ready)
+        except Exception as exc:
+            if not ready.is_set():
+                raise _OpenFailed(exc) from exc
+            raise
+
+    async def _own(self, handle: str | None, ready: asyncio.Event) -> asyncio.Task | None:
+        config = build_config(self._target, handle, self._voice, self._compression)
+        async with self._connect(self._model, config) as conn:
             self._conn = conn
             self._connected.set()
             ready.set()

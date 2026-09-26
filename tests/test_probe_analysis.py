@@ -33,6 +33,7 @@ def test_write_wav_saves_24k_mono(tmp_path):
 
 def test_probe_config_sets_voice_only_when_given():
     assert probe.probe_config("en", None).speech_config is None
+    assert probe.probe_config("en", None).context_window_compression.sliding_window is not None
     c = probe.probe_config("en", "Kore")
     assert c.speech_config.voice_config.prebuilt_voice_config.voice_name == "Kore"
     assert c.translation_config.target_language_code == "en"

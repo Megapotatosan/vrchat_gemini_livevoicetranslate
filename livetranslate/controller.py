@@ -142,7 +142,23 @@ class Controller:
         pipeline = self._d.make_pipeline(side, self._target(side), self._settings,
                                          self._chatbox if side == "mine" else None,
                                          self._voice_sink if side == "mine" else None, self.handle_event)
-        self._pipelines[side] = (pipeline, asyncio.create_task(pipeline.run()))
+        task = asyncio.create_task(pipeline.run())
+        self._pipelines[side] = (pipeline, task)
+        task.add_done_callback(lambda t: asyncio.ensure_future(self._pipeline_ended(side, t)))
+
+    async def _pipeline_ended(self, side: Side, task: asyncio.Task) -> None:
+        """A pipeline finished on its own (capture failed, Gemini refused): drop it; stop when none are left."""
+        async with self._lock:
+            entry = self._pipelines.get(side)
+            if entry is None or entry[1] is not task:
+                return  # stopped or replaced on purpose
+            del self._pipelines[side]
+            if not task.cancelled() and task.exception() is not None:
+                log.error("pipeline %s crashed", side, exc_info=task.exception())
+            if "mine" not in self._pipelines:
+                self._stop_voice()
+            if not self._pipelines:
+                await self._stop_all(announce=False)  # keep the pipeline's own error in the status bar
 
     async def _stop_side(self, side: Side) -> None:
         entry = self._pipelines.pop(side, None)
@@ -216,12 +232,13 @@ class Controller:
             await self._stop_all()
             return OK
 
-    async def _stop_all(self) -> None:
+    async def _stop_all(self, announce: bool = True) -> None:
         if not self._running:
             return
         await self._stop_pipelines()
         self._running = False
-        self._d.emit(StatusEvent("info", "status.stopped"))
+        if announce:
+            self._d.emit(StatusEvent("info", "status.stopped"))
         self._emit_stats()
         self._emit_state()
 
