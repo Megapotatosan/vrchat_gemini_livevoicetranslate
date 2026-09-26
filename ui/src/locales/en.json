@@ -1,0 +1,126 @@
+{
+  "app": {
+    "name": "LiveTranslate",
+    "subtitle": "Gemini Live · VRChat"
+  },
+  "sidebar": {
+    "start": "▶ Start translating",
+    "stop": "■ Stop translating",
+    "direction": "Direction",
+    "languages": "Languages",
+    "i_speak": "I speak",
+    "translate_to": "Translate to",
+    "auto": "Auto-detect",
+    "swap": "Swap languages",
+    "mirror": "Others' speech: {{from}} → {{to}}",
+    "mirror_auto": "Others' speech: Auto → {{to}} (your interface language)",
+    "outputs": "Outputs",
+    "chatbox": "Chatbox",
+    "chatbox_hint": "OSC → VRChat bubble",
+    "voice": "Translated voice",
+    "voice_hint": "Virtual mic → others hear it",
+    "key_set": "Gemini API key set",
+    "get_key": "No API key: get one ▸",
+    "settings": "Settings"
+  },
+  "direction": {
+    "mine": "I speak",
+    "theirs": "Others",
+    "both": "Both"
+  },
+  "side": {
+    "mine": "I speak",
+    "theirs": "Others"
+  },
+  "chat": {
+    "sent": "Sent",
+    "received": "Received",
+    "empty": "Press Start, then talk. Translations appear here."
+  },
+  "composer": {
+    "placeholder": "Type a message, press Enter to send (Esc clears)",
+    "disabled_theirs": "Typing works when the direction includes “I speak”",
+    "disabled_stopped": "Start translating to type a message",
+    "send": "Send"
+  },
+  "status": {
+    "ready": "Ready",
+    "running": "Running",
+    "stopped": "Stopped",
+    "settings_reset": "Settings file was damaged and has been reset (backup saved as settings.json.broken)",
+    "reconnecting": "Reconnecting (attempt {{attempt}})…",
+    "quota_retry": "Gemini quota reached, retrying in {{seconds}} s",
+    "device_fallback": "Device \"{{name}}\" not found, using the default",
+    "stats": "Translated {{count}} · first text {{ms}} ms",
+    "stats_idle": "Translated {{count}}",
+    "get_cable": "Get VB-Cable ▸"
+  },
+  "errors": {
+    "no_api_key": "Add a Gemini API key in Settings first",
+    "auth": "Gemini rejected the API key. Check it in Settings.",
+    "network": "Can't reach Gemini. Check your internet connection.",
+    "model_unavailable": "Model {{model}} isn't available for this API key",
+    "capture_failed": "Couldn't open the audio device for {{side}}",
+    "no_loopback": "No VRChat audio device found. Play some game audio and try again.",
+    "no_virtual_cable": "No virtual audio cable found. Install VB-Cable or VoiceMeeter.",
+    "empty_text": "Type a message first",
+    "not_running": "Start translating first",
+    "direction_theirs": "Typing works when the direction includes “I speak”",
+    "timeout": "Gemini took too long to answer",
+    "translate_failed": "Translation failed",
+    "bad_argument": "Invalid request",
+    "cancelled": "Cancelled",
+    "export_failed": "Couldn't save the log archive"
+  },
+  "settings": {
+    "title": "Settings",
+    "close": "Close settings",
+    "api_key": "Gemini API key",
+    "save": "Save",
+    "clear": "Clear",
+    "key_ok": "Key works and is saved",
+    "key_cleared": "Key removed",
+    "mic": "Microphone",
+    "loopback": "VRChat audio",
+    "voice_out": "Translated voice output",
+    "auto_mic": "Auto-detect (default device)",
+    "auto_loopback": "Auto-detect (loopback)",
+    "auto_voice": "Auto (VoiceMeeter / VB-Cable)",
+    "refresh": "Refresh",
+    "ui_language": "Interface language",
+    "logs": "Logs",
+    "export": "Export log archive…",
+    "exported": "Saved to {{path}}",
+    "version": "Version {{version}}"
+  },
+  "lang": {
+    "en": "English",
+    "zh-Hant": "Chinese (Traditional)",
+    "zh-Hans": "Chinese (Simplified)",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "ru": "Russian",
+    "uk": "Ukrainian",
+    "pl": "Polish",
+    "nl": "Dutch",
+    "tr": "Turkish",
+    "ar": "Arabic",
+    "th": "Thai",
+    "vi": "Vietnamese",
+    "id": "Indonesian",
+    "ms": "Malay",
+    "fil": "Filipino",
+    "hi": "Hindi"
+  },
+  "ui_lang": {
+    "en": "English",
+    "zh-Hant": "繁體中文",
+    "ja": "日本語",
+    "ko": "한국어"
+  }
+}
