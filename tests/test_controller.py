@@ -69,7 +69,7 @@ def ctl_factory(tmp_path):
                    "output": [DeviceInfo(i, n, "output", i == 0, 48000, 2) for i, n in enumerate(outputs)]}
         deps = ControllerDeps(store=ns.store, keys=keys, emit=ns.events.append, make_pipeline=make_pipeline,
                               make_chatbox=lambda s: ns.chatbox, make_voice=make_voice,
-                              make_translator=lambda k, s: ns.translator, list_devices=lambda: devices,
+                              make_translator=lambda k, s: ns.translator, list_devices=lambda refresh=False: devices,
                               validate_key=AsyncMock(return_value=(True, None)), os_locale=os_locale,
                               sleep=fake_sleep)
         ns.deps = deps
@@ -197,3 +197,48 @@ async def test_list_devices_and_set_device(ctl_factory):
     await c.start()
     await c.set_device("mic", "Headset Mic")
     assert deps.pipelines[0].stopped and deps.store.load()[0].devices.mic == "Headset Mic" and len(deps.pipelines) == 2
+
+
+class SlowPipeline(FakePipeline):
+    async def stop(self):
+        await asyncio.sleep(0.3)
+        await super().stop()
+
+
+async def test_sides_stop_concurrently(ctl_factory):
+    c, deps = ctl_factory()
+    deps.deps.make_pipeline = lambda side, target, settings, chatbox, voice_sink, emit: deps.pipelines.append(
+        SlowPipeline(side, target)) or deps.pipelines[-1]
+    await c.set_direction("both")
+    await c.start()
+    loop = asyncio.get_running_loop()
+    started = loop.time()
+    await c.stop()
+    assert loop.time() - started < 0.5
+
+
+async def test_stop_clears_chatbox_typing(ctl_factory):
+    c, deps = ctl_factory()
+    await c.start()
+    deps.chatbox.set_typing(True)
+    await c.stop()
+    assert deps.osc[-1] == ("/chatbox/typing", False)
+
+
+async def test_debug_transcripts_are_logged_when_enabled(ctl_factory, caplog):
+    c, deps = ctl_factory()
+    c._settings.logging.debug_transcripts = True
+    caplog.set_level(logging.INFO)
+    c.handle_event(MessageEvent("m1", "mine", "你好", "hello", True, "t"))
+    assert "hello" in caplog.text
+
+
+async def test_device_list_refreshes_only_when_idle(ctl_factory):
+    c, deps = ctl_factory()
+    seen = []
+    base = deps.deps.list_devices
+    deps.deps.list_devices = lambda refresh=False: seen.append(refresh) or base()
+    await c.list_devices()
+    await c.start()
+    await c.list_devices()
+    assert seen == [True, False]

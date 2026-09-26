@@ -67,3 +67,27 @@ def test_clear():
     j.feed("t1", ms(500))
     j.clear()
     assert j.buffered_ms == 0 and j.read(96) == b"\0" * 96
+
+
+def test_voice_output_opens_at_the_device_rate(monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    from livetranslate.audio.voice_output import VoiceOutput
+
+    opened = {}
+
+    class Stream:
+        def __init__(self, **kw):
+            opened.update(kw)
+
+        def start(self):
+            pass
+
+    monkeypatch.setitem(sys.modules, "sounddevice", SimpleNamespace(RawOutputStream=Stream))
+    out = VoiceOutput(DeviceInfo(4, "CABLE Input", "output", False, 44100, 2), VoiceSettings())
+    out.start()
+    assert opened["samplerate"] == 44100
+    one_second = np.zeros(24000, np.int16).tobytes()
+    out.feed("t", one_second)
+    assert out._buffer.buffered_ms == pytest.approx(1000, abs=10)

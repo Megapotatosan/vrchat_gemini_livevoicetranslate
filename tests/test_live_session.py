@@ -92,3 +92,43 @@ async def test_stop_during_backoff_is_prompt(make_session):
     await asyncio.sleep(0.05)
     await s.stop()
     await asyncio.wait_for(task, 0.5)
+
+
+def test_classify_live_close_codes():
+    assert classify_error(errors.APIError(1007, "API key not valid. Please pass a valid API key.")) == "auth"
+    assert classify_error(errors.APIError(1011, "You exceeded your current quota")) == "quota"
+    assert classify_error(errors.APIError(1008, "models/x is not found for API version v1beta")) == "model"
+    assert classify_error(errors.APIError(1006, "Abnormal closure.")) == "network"
+
+
+async def test_reconnect_success_is_reported(make_session):
+    s, conn, _, _, statuses = make_session([OSError("down"), FakeConnection([])])
+    await run_until(s, lambda: len(statuses) >= 2)
+    assert statuses[-1] == StatusEvent("info", "status.reconnected", {})
+
+
+class HangingExit(FakeConnection):
+    pass
+
+
+async def test_stop_is_bounded_when_close_hangs():
+    from contextlib import asynccontextmanager
+
+    conn = FakeConnection([])
+
+    @asynccontextmanager
+    async def slow_connect(model, config):
+        try:
+            yield conn
+        finally:
+            await asyncio.shield(asyncio.sleep(10))  # a close handshake that never completes
+
+    turns = TurnAssembler("mine", lambda m: None, lambda f: None)
+    s = LiveSession(connect=slow_connect, model="m", target_code="en", turns=turns, on_status=lambda e: None)
+    task = asyncio.create_task(s.run())
+    await wait_for(lambda: s.connected, 1)
+    loop = asyncio.get_running_loop()
+    started = loop.time()
+    await s.stop()
+    assert loop.time() - started < 1.0
+    task.cancel()

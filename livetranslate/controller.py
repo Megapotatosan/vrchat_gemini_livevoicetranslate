@@ -47,7 +47,7 @@ class ControllerDeps:
     make_chatbox: Callable[[Settings], ChatboxSender]
     make_voice: Callable[[DeviceInfo, Settings], VoiceOutput]
     make_translator: Callable[[str, Settings], TextTranslator]
-    list_devices: Callable[[], dict[DeviceKind, list[DeviceInfo]]]
+    list_devices: Callable[..., dict[DeviceKind, list[DeviceInfo]]]  # (refresh: bool = False)
     validate_key: Callable[[str], Awaitable[tuple[bool, str | None]]]
     os_locale: str | None = None
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep
@@ -122,7 +122,7 @@ class Controller:
             self._emit_stats()
             return
         if isinstance(event, MessageEvent) and event.final and self._settings.logging.debug_transcripts:
-            transcript_log.debug("[%s] %s => %s", event.side, event.source, event.translation)
+            transcript_log.info("[%s] %s => %s", event.side, event.source, event.translation)
         self._d.emit(event)
 
     async def tick(self) -> None:
@@ -164,9 +164,10 @@ class Controller:
             self._start_voice()
 
     async def _stop_pipelines(self) -> None:
-        for side in list(self._pipelines):
-            await self._stop_side(side)
+        await asyncio.gather(*(self._stop_side(side) for side in list(self._pipelines)))
         self._stop_voice()
+        if self._chatbox.typing:
+            self._chatbox.set_typing(False)
 
     async def _restart(self, side: Side) -> None:
         if self._running and side in self._pipelines:
@@ -309,7 +310,8 @@ class Controller:
         return OK
 
     async def list_devices(self) -> Result:
-        devices = self._d.list_devices()
+        # Re-enumerating restarts PortAudio, which would kill open streams, so only refresh while idle.
+        devices = self._d.list_devices(refresh=not self._running and self._voice is None)
         return {"ok": True, "inputs": [d.name for d in devices["input"]],
                 "loopbacks": [d.name for d in devices["loopback"]], "outputs": [d.name for d in devices["output"]]}
 

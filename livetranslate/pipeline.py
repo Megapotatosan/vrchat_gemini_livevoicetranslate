@@ -94,7 +94,8 @@ class Pipeline:
 def build_pipeline(side: Side, *, settings: Settings, target_code: str, connect: ConnectFn, source: FrameSource,
                    emit: Callable[[object], None], chatbox: ChatboxSender | None = None,
                    voice_sink: Callable[[str, bytes], None] | None = None,
-                   is_speech: Callable[[bytes], bool] | None = None) -> Pipeline:
+                   is_speech: Callable[[bytes], bool] | None = None,
+                   budget: ConnectionBudget | None = None) -> Pipeline:
     use_chatbox = chatbox if side == "mine" else None
 
     def on_message(event: MessageEvent) -> None:
@@ -113,7 +114,7 @@ def build_pipeline(side: Side, *, settings: Settings, target_code: str, connect:
     turns = TurnAssembler(side, on_message, emit, final_silence_s=g.final_silence_s)
     session = LiveSession(connect=connect, model=g.live_model, target_code=target_code, turns=turns,
                           on_status=on_status, on_audio=voice_sink if side == "mine" else None,
-                          budget=ConnectionBudget(g.max_new_sessions_per_minute),
+                          budget=budget or ConnectionBudget(g.max_new_sessions_per_minute),
                           backoff=Backoff(g.reconnect_backoff))
     gate = SpeechGate.from_settings(settings.gate, is_speech or make_webrtc_vad(settings.gate.vad_aggressiveness))
     return Pipeline(side, source=source, gate=gate, session=session, turns=turns, emit=emit, on_gate=on_gate)

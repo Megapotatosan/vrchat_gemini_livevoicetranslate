@@ -38,3 +38,24 @@ def test_emit_from_other_thread():
     t.join()
     b.flush()
     assert sent[0][0]["type"] == "stats"
+
+
+def test_background_sender_never_blocks_the_caller():
+    from livetranslate.events import BackgroundSender
+
+    release, got = threading.Event(), []
+
+    def slow_deliver(batch):
+        release.wait(2)
+        got.append(batch)
+
+    sender = BackgroundSender(slow_deliver)
+    t0 = __import__("time").monotonic()
+    sender.send([{"type": "stats"}])
+    sender.send([{"type": "state"}])
+    assert __import__("time").monotonic() - t0 < 0.1
+    release.set()
+    sender.close(timeout=2)
+    assert got == [[{"type": "stats"}], [{"type": "state"}]]
+    sender.send([{"type": "late"}])
+    assert len(got) == 2

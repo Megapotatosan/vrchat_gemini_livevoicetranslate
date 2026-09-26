@@ -53,7 +53,8 @@
     "device_fallback": "Device \"{{name}}\" not found, using the default",
     "stats": "Translated {{count}} · first text {{ms}} ms",
     "stats_idle": "Translated {{count}}",
-    "get_cable": "Get VB-Cable ▸"
+    "get_cable": "Get VB-Cable ▸",
+    "reconnected": "Connected again"
   },
   "errors": {
     "no_api_key": "Add a Gemini API key in Settings first",

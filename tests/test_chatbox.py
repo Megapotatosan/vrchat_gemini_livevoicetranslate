@@ -104,3 +104,41 @@ def test_disabled_sends_nothing(cb):
     s.update(ev("Hi", True))
     s.poll()
     assert osc.sent == []
+
+
+def test_typing_cleared_when_nothing_arrives(cb, clock):
+    s, osc = cb
+    s.set_typing(True)
+    clock.advance(3.9)
+    s.poll()
+    assert osc.sent == [("/chatbox/typing", True)]
+    clock.advance(0.1)
+    s.poll()
+    assert osc.sent[-1] == ("/chatbox/typing", False)
+
+
+def test_typing_kept_while_text_is_flowing(cb, clock):
+    s, osc = cb
+    s.set_typing(True)
+    for _ in range(4):
+        clock.advance(2.0)
+        s.update(ev("Hello there"))
+        s.poll()
+    assert ("/chatbox/typing", False) not in osc.sent
+
+
+def test_empty_final_clears_typing(cb):
+    s, osc = cb
+    s.set_typing(True)
+    s.update(ev("", True))
+    s.poll()
+    assert osc.sent[-1] == ("/chatbox/typing", False)
+
+
+def test_disabling_drops_queued_messages(cb, clock):
+    s, osc = cb
+    s.send_final_text("old")
+    s.enabled = False
+    s.enabled = True
+    s.poll()
+    assert osc.sent == []

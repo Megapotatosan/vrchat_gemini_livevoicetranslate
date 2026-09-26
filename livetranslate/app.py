@@ -12,7 +12,7 @@ from pathlib import Path
 
 from livetranslate import __version__, paths
 from livetranslate.credentials import KeyStore
-from livetranslate.events import EventBatcher
+from livetranslate.events import BackgroundSender, EventBatcher
 from livetranslate.logging_setup import export_logs, install_crash_hooks, setup_logging
 
 log = logging.getLogger(__name__)
@@ -41,14 +41,19 @@ def _production_controller(emit, keys: KeyStore, loop: asyncio.AbstractEventLoop
     from livetranslate.languages import os_locale
     from livetranslate.outputs.chatbox import ChatboxSender, udp_client
     from livetranslate.pipeline import build_pipeline
+    from livetranslate.gemini.budget import ConnectionBudget
     from livetranslate.settings import default_store
 
+    budgets: dict[str, ConnectionBudget] = {}  # one per direction, shared across restarts
+
     def make_pipeline(side, target, settings, chatbox, voice_sink, pipeline_emit):
+        budget = budgets.setdefault(side, ConnectionBudget(settings.gemini.max_new_sessions_per_minute))
         queue = FrameQueue(loop)
         source = (MicCapture(settings.devices.mic, queue) if side == "mine"
                   else LoopbackCapture(settings.devices.loopback, queue))
         return build_pipeline(side, settings=settings, target_code=target, connect=gemini_connect(keys.get() or ""),
-                              source=source, emit=pipeline_emit, chatbox=chatbox, voice_sink=voice_sink)
+                              source=source, emit=pipeline_emit, chatbox=chatbox, voice_sink=voice_sink,
+                              budget=budget)
 
     def make_translator(key, settings):
         from google import genai
@@ -89,12 +94,15 @@ def main(argv: list[str] | None = None) -> int:
 
     window_holder: dict[str, object] = {}
 
-    def send(batch: list[dict]) -> None:
+    def deliver(batch: list[dict]) -> None:
         window = window_holder.get("window")
         if window is not None:
             window.evaluate_js(f"window.__lt&&window.__lt.dispatch({json.dumps(batch, ensure_ascii=False)})")
 
-    batcher = EventBatcher(send)
+    # evaluate_js waits on the GUI thread, so it must never run on the engine loop: the window's
+    # closing handler blocks the GUI thread while it waits for the engine to shut down.
+    sender = BackgroundSender(deliver)
+    batcher = EventBatcher(sender.send)
 
     async def create_controller():
         from livetranslate.demo import DemoController
@@ -133,6 +141,7 @@ def main(argv: list[str] | None = None) -> int:
                 log.debug("dark title bar not applied", exc_info=True)
 
     def on_closing() -> None:
+        sender.close(timeout=0)
         try:
             asyncio.run_coroutine_threadsafe(controller.shutdown(), loop).result(5)
         except Exception:  # noqa: BLE001 - never block closing

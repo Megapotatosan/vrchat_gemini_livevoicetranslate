@@ -53,7 +53,8 @@
     "device_fallback": "找不到裝置「{{name}}」，改用預設裝置",
     "stats": "已翻譯 {{count}} 則 · 首字 {{ms}} 毫秒",
     "stats_idle": "已翻譯 {{count}} 則",
-    "get_cable": "下載 VB-Cable ▸"
+    "get_cable": "下載 VB-Cable ▸",
+    "reconnected": "已重新連線"
   },
   "errors": {
     "no_api_key": "請先在設定中加入 Gemini API 金鑰",

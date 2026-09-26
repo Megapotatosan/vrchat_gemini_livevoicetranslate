@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import logging
+import queue
 import threading
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -107,3 +109,30 @@ class EventBatcher:
         while True:
             await asyncio.sleep(self._interval_s)
             self.flush()
+
+
+class BackgroundSender:
+    """Delivers batches on its own thread, so a slow or blocked UI never stalls the engine loop."""
+
+    def __init__(self, deliver: Callable[[list[dict[str, Any]]], None]) -> None:
+        self._deliver = deliver
+        self._queue: queue.Queue[list[dict[str, Any]] | None] = queue.Queue()
+        self._closed = False
+        self._thread = threading.Thread(target=self._run, name="ui-sender", daemon=True)
+        self._thread.start()
+
+    def send(self, batch: list[dict[str, Any]]) -> None:
+        if not self._closed:
+            self._queue.put(batch)
+
+    def close(self, timeout: float = 0.5) -> None:
+        self._closed = True
+        self._queue.put(None)
+        self._thread.join(timeout)
+
+    def _run(self) -> None:
+        while (batch := self._queue.get()) is not None:
+            try:
+                self._deliver(batch)
+            except Exception:  # noqa: BLE001 - a closed window must not kill the sender
+                logging.getLogger(__name__).debug("UI delivery failed", exc_info=True)

@@ -31,13 +31,23 @@ def resolve_device(name: str, devices: Sequence[DeviceInfo]) -> tuple[DeviceInfo
     return default, bool(name)
 
 
-def list_devices() -> dict[DeviceKind, list[DeviceInfo]]:
+def list_devices(refresh: bool = False) -> dict[DeviceKind, list[DeviceInfo]]:
+    """Enumerate devices. refresh=True re-initialises PortAudio so newly plugged devices appear;
+    only do that while no stream is open."""
     import sounddevice as sd
 
+    if refresh:
+        sd._terminate()
+        sd._initialize()
     result: dict[DeviceKind, list[DeviceInfo]] = {"input": [], "loopback": [], "output": []}
     hostapis = sd.query_hostapis()
     wasapi = next((i for i, h in enumerate(hostapis) if "WASAPI" in h["name"]), None)
-    default_in, default_out = sd.default.device
+    if wasapi is not None:
+        # PortAudio's global defaults belong to the default host API (MME), not WASAPI.
+        api = sd.query_hostapis(wasapi)
+        default_in, default_out = api["default_input_device"], api["default_output_device"]
+    else:
+        default_in, default_out = sd.default.device
     for index, dev in enumerate(sd.query_devices()):
         if wasapi is not None and dev["hostapi"] != wasapi:
             continue

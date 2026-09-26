@@ -14,6 +14,7 @@ from livetranslate.settings import ChatboxSettings
 INPUT = "/chatbox/input"
 TYPING = "/chatbox/typing"
 _EPS = 1e-6
+TYPING_IDLE_S = 4.0  # clear the typing bubble when no translation text arrives for this long
 _SENTENCE_END = re.compile(r"(?<=[.!?。！？\n])")
 
 
@@ -84,17 +85,38 @@ class ChatboxSender:
         self._client = client
         self._cfg = cfg
         self._now = now
-        self.enabled = True
+        self._enabled = True
+        self._typing = False
+        self._last_activity = 0.0
         self._finals: deque[tuple[str, bool]] = deque()  # (text, last part of its turn)
         self._pending: tuple[str, str] | None = None     # newest in-progress (turn id, text)
         self._turn_sent: dict[str, tuple[float, str]] = {}
         self._sent_at: deque[float] = deque()
         self._last_send: float | None = None
 
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value: bool) -> None:
+        self._enabled = value
+        if not value:  # nothing stale should burst out when the chatbox is switched back on
+            self._finals.clear()
+            self._pending = None
+            self._turn_sent.clear()
+            self._typing = False
+
     def update(self, event: MessageEvent) -> None:
         if not self.enabled or event.side != "mine":
             return
+        self._last_activity = self._now()
         if event.final:
+            if not event.translation.strip():
+                self._pending = None
+                self._turn_sent.pop(event.id, None)
+                self.set_typing(False)
+                return
             if self._pending and self._pending[0] == event.id:
                 self._pending = None
             self._turn_sent.pop(event.id, None)
@@ -114,7 +136,13 @@ class ChatboxSender:
 
     def set_typing(self, on: bool) -> None:
         if self.enabled:
+            self._typing = on
+            self._last_activity = self._now()
             self._client.send_message(TYPING, on)
+
+    @property
+    def typing(self) -> bool:
+        return self._typing
 
     def poll(self) -> None:
         if not self.enabled:
@@ -124,7 +152,7 @@ class ChatboxSender:
                 text, last = self._finals.popleft()
                 self._send(text, sound=self._cfg.notification_sound)
                 if last:
-                    self._client.send_message(TYPING, False)
+                    self.set_typing(False)
             elif self._pending and self._pending_due():
                 turn_id, text = self._pending
                 self._pending = None
@@ -135,6 +163,9 @@ class ChatboxSender:
                 self._turn_sent[turn_id] = (self._now(), text)
             else:
                 break
+        if (self._typing and not self._finals and self._pending is None
+                and self._now() - self._last_activity >= TYPING_IDLE_S - _EPS):
+            self.set_typing(False)
 
     def _pending_due(self) -> bool:
         assert self._pending is not None

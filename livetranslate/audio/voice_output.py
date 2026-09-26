@@ -103,8 +103,10 @@ class VoiceOutput:
     def __init__(self, device: DeviceInfo, cfg: VoiceSettings) -> None:
         self.device = device
         self._cfg = cfg
-        self._buffer = JitterBuffer(cfg.sample_rate, cfg.buffer_ms, cfg.max_buffer_ms)
-        self._upsampler = Upsampler(24000, cfg.sample_rate)
+        # Open at the device's own shared-mode rate; WASAPI rejects other rates.
+        self._rate = device.sample_rate or cfg.sample_rate
+        self._buffer = JitterBuffer(self._rate, cfg.buffer_ms, cfg.max_buffer_ms)
+        self._upsampler = Upsampler(24000, self._rate)
         self._stream = None
 
     def start(self) -> None:
@@ -118,8 +120,14 @@ class VoiceOutput:
             mono = np.frombuffer(self._buffer.read(frames * 2), np.int16)
             outdata[:] = np.repeat(mono, channels).tobytes() if channels > 1 else mono.tobytes()
 
-        self._stream = sd.RawOutputStream(device=self.device.index, samplerate=self._cfg.sample_rate,
-                                          channels=channels, dtype="int16", callback=callback)
+        extra = {}
+        if hasattr(sd, "WasapiSettings"):
+            try:
+                extra["extra_settings"] = sd.WasapiSettings(auto_convert=True)
+            except Exception:  # noqa: BLE001 - not a WASAPI device / older PortAudio
+                extra = {}
+        self._stream = sd.RawOutputStream(device=self.device.index, samplerate=self._rate,
+                                          channels=channels, dtype="int16", callback=callback, **extra)
         self._stream.start()
 
     def feed(self, turn_id: str, pcm24: bytes) -> None:

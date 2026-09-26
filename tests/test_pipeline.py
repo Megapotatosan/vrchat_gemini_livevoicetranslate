@@ -108,3 +108,12 @@ async def test_device_fallback_warns_and_continues():
     await task
     assert events[0] == StatusEvent("warn", "status.device_fallback", {"kind": "mic", "name": "Fake Mic"})
     assert source.stopped
+
+
+async def test_build_pipeline_uses_the_given_budget():
+    from livetranslate.gemini.budget import ConnectionBudget
+
+    budget = ConnectionBudget(4)
+    p = build_pipeline("mine", settings=Settings(), target_code="en", connect=FakeConnect([]),
+                       source=FakeSource([]), emit=lambda e: None, budget=budget)
+    assert p._session._budget is budget

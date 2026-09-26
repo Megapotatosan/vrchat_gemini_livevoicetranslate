@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import AsyncIterator, Awaitable, Callable
-from contextlib import AbstractAsyncContextManager, suppress
+from contextlib import AbstractAsyncContextManager
 from typing import Any, Literal, Protocol
 
 from google.genai import errors, types
@@ -51,7 +51,7 @@ def build_config(target_code: str, handle: str | None) -> types.LiveConnectConfi
 
 
 def classify_error(exc: BaseException) -> ErrorKind:
-    if isinstance(exc, errors.APIError):
+    if isinstance(exc, errors.APIError) and exc.code < 1000:
         if exc.code in (400, 401, 403):
             return "auth"
         if exc.code == 429:
@@ -63,14 +63,17 @@ def classify_error(exc: BaseException) -> ErrorKind:
         from websockets.exceptions import ConnectionClosed
     except ImportError:  # pragma: no cover - websockets ships with google-genai
         ConnectionClosed = ()  # type: ignore[assignment]  # noqa: N806
-    if isinstance(exc, ConnectionClosed):
+    # The SDK reports Live API websocket closes as APIError(close_code, reason); classify by reason.
+    if isinstance(exc, (errors.APIError, ConnectionClosed)):
         reason = str(exc).lower()
-        if "api key" in reason:
+        if "api key" in reason or "permission" in reason or "unauthenticated" in reason:
             return "auth"
-        if "quota" in reason or "exceeded" in reason:
+        if "quota" in reason or "exceeded" in reason or "rate limit" in reason:
             return "quota"
         if "not found" in reason or "not supported" in reason:
             return "model"
+        if isinstance(exc, errors.APIError) and exc.code == 1007:
+            return "auth"
     return "network"
 
 
@@ -93,6 +96,7 @@ class LiveSession:
         self._stopping = asyncio.Event()
         self._tasks: set[asyncio.Task] = set()
         self._audio_turn = 0
+        self._recovering = False
         self.handle: str | None = None
 
     @property
@@ -127,13 +131,14 @@ class LiveSession:
                 if not await self._handle_error(exc):
                     break
 
-    async def stop(self) -> None:
+    async def stop(self, timeout_s: float = 0.5) -> None:
+        """Stop promptly; a close handshake that hangs (half-open connection) is abandoned after timeout_s."""
         self._stopping.set()
-        for task in list(self._tasks):
+        tasks = list(self._tasks)
+        for task in tasks:
             task.cancel()
-        for task in list(self._tasks):
-            with suppress(asyncio.CancelledError, Exception):
-                await task
+        if tasks:
+            await asyncio.wait(tasks, timeout=timeout_s)
 
     # ---- audio in --------------------------------------------------------------------------------
 
@@ -194,6 +199,7 @@ class LiveSession:
         if kind == "model":
             self._on_status(StatusEvent("error", "errors.model_unavailable", {"model": self._model}))
             return False
+        self._recovering = True
         delay = self._backoff.next_delay()
         if kind == "quota":
             self._on_status(StatusEvent("warn", "status.quota_retry", {"seconds": delay}))
@@ -207,6 +213,9 @@ class LiveSession:
             self._conn = conn
             self._connected.set()
             ready.set()
+            if self._recovering:
+                self._recovering = False
+                self._on_status(StatusEvent("info", "status.reconnected", {}))
             self._backoff.mark_connected()
             try:
                 if not await self._receive(conn):
