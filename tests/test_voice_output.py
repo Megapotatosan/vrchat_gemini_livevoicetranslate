@@ -88,6 +88,32 @@ def test_voice_output_opens_at_the_device_rate(monkeypatch):
     out = VoiceOutput(DeviceInfo(4, "CABLE Input", "output", False, 44100, 2), VoiceSettings())
     out.start()
     assert opened["samplerate"] == 44100
-    one_second = np.zeros(24000, np.int16).tobytes()
+    one_second = np.full(24000, 3000, np.int16).tobytes()
     out.feed("t", one_second)
     assert out._buffer.buffered_ms == pytest.approx(1000, abs=10)
+
+
+def test_silence_trimmer_keeps_short_pauses_and_drops_long_silence():
+    from livetranslate.audio.voice_output import SilenceTrimmer
+
+    speech = (np.full(6000, 3000, np.int16)).tobytes()  # 250 ms at 24 kHz
+    silence = np.zeros(6000, np.int16).tobytes()
+    t = SilenceTrimmer(max_silence_ms=500)
+    kept = [t.accept(c) for c in [speech, silence, silence, silence, silence, speech, silence]]
+    assert kept == [True, True, True, False, False, True, True]
+
+
+def test_voice_output_drops_continuous_silence(monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    from livetranslate.audio.voice_output import VoiceOutput
+
+    monkeypatch.setitem(sys.modules, "sounddevice", SimpleNamespace(RawOutputStream=None))
+    out = VoiceOutput(DeviceInfo(4, "CABLE Input", "output", False, 48000, 2), VoiceSettings())
+    speech = (np.full(6000, 3000, np.int16)).tobytes()
+    silence = np.zeros(6000, np.int16).tobytes()
+    out.feed("a0", speech)
+    for _ in range(40):  # 10 s of the model's idle audio stream
+        out.feed("a0", silence)
+    assert out._buffer.buffered_ms == pytest.approx(750, abs=20)

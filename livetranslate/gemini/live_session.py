@@ -96,6 +96,7 @@ class LiveSession:
         self._stopping = asyncio.Event()
         self._tasks: set[asyncio.Task] = set()
         self._audio_turn = 0
+        self._bubbles_seen = 0
         self._recovering = False
         self.handle: str | None = None
 
@@ -248,13 +249,16 @@ class LiveSession:
                 self._turns.add_source(sc.input_transcription.text)
             if sc.output_transcription and sc.output_transcription.text:
                 self._turns.add_translation(sc.output_transcription.text)
+            if self._turns.count != self._bubbles_seen:
+                # A bubble ended (turn_complete or the silence fallback): later audio is a new sentence.
+                self._bubbles_seen = self._turns.count
+                self._audio_turn += 1
             if sc.model_turn and sc.model_turn.parts and self._on_audio is not None:
                 for part in sc.model_turn.parts:
                     if part.inline_data and part.inline_data.data:
                         self._on_audio(f"a{self._audio_turn}", part.inline_data.data)
             if sc.turn_complete:
                 self._turns.finalise()
-                self._audio_turn += 1
         upd = msg.session_resumption_update
         if upd is not None and upd.resumable and upd.new_handle:
             self.handle = upd.new_handle

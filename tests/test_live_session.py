@@ -132,3 +132,17 @@ async def test_stop_is_bounded_when_close_hangs():
     await s.stop()
     assert loop.time() - started < 1.0
     task.cancel()
+
+
+async def test_audio_turn_follows_bubbles_when_no_turn_complete(make_session):
+    # The live translate model never sends turn_complete; bubbles end by the silence fallback.
+    s, conn, msgs, audio, _ = make_session([FakeConnection([], respond_after_end=False)])
+    audio_msg = types.LiveServerMessage.model_validate(
+        {"server_content": {"model_turn": {"parts": [{"inline_data": {"mime_type": "audio/pcm;rate=24000", "data": "AQI="}}]}}})
+    text_msg = types.LiveServerMessage.model_validate({"server_content": {"output_transcription": {"text": "Hi"}}})
+    s._dispatch(text_msg)
+    s._dispatch(audio_msg)
+    s._turns.finalise()  # what poll() does after 3 s of silence
+    s._dispatch(text_msg)
+    s._dispatch(audio_msg)
+    assert [tid for tid, _ in audio] == ["a0", "a1"]

@@ -28,6 +28,25 @@ def pick_voice_device(chosen: str, outputs: Sequence[DeviceInfo], fallback_names
     return None
 
 
+class SilenceTrimmer:
+    """The live translate model streams audio continuously, mostly silence. Keep natural pauses up to
+    max_silence_ms, drop the rest, so the voice buffer never fills with silence and delay can't grow."""
+
+    def __init__(self, max_silence_ms: int = 500, floor_dbfs: float = -55.0, sample_rate: int = 24000) -> None:
+        self._max_samples = max_silence_ms * sample_rate // 1000
+        self._floor_dbfs = floor_dbfs
+        self._silent_samples = 0
+
+    def accept(self, pcm: bytes) -> bool:
+        from livetranslate.audio.gate import frame_dbfs
+
+        if frame_dbfs(pcm) >= self._floor_dbfs:
+            self._silent_samples = 0
+            return True
+        self._silent_samples += len(pcm) // 2
+        return self._silent_samples <= self._max_samples
+
+
 class Upsampler:
     def __init__(self, in_rate: int = 24000, out_rate: int = 48000) -> None:
         import soxr
@@ -107,6 +126,7 @@ class VoiceOutput:
         self._rate = device.sample_rate or cfg.sample_rate
         self._buffer = JitterBuffer(self._rate, cfg.buffer_ms, cfg.max_buffer_ms)
         self._upsampler = Upsampler(24000, self._rate)
+        self._trimmer = SilenceTrimmer()
         self._stream = None
 
     def start(self) -> None:
@@ -131,7 +151,8 @@ class VoiceOutput:
         self._stream.start()
 
     def feed(self, turn_id: str, pcm24: bytes) -> None:
-        self._buffer.feed(turn_id, self._upsampler.process(pcm24))
+        if self._trimmer.accept(pcm24):
+            self._buffer.feed(turn_id, self._upsampler.process(pcm24))
 
     def stop(self) -> None:
         if self._stream is not None:
