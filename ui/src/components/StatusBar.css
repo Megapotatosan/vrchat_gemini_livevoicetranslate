@@ -1,0 +1,8 @@
+.status { display: flex; align-items: center; gap: 8px; padding: 6px 16px; background: var(--d-950); font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; min-width: 0; }
+.status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); flex: none; }
+.status.running .dot { background: var(--primary-400); box-shadow: 0 0 0 3px #48a49533; }
+.status.warn .text { color: var(--warning); }
+.status.error .text { color: #e07a7d; }
+.status .text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status .link { background: transparent; border: 0; color: var(--primary-300); cursor: pointer; text-decoration: underline; padding: 0; font-size: 12px; }
+.status .stats { margin-left: auto; color: var(--text-faint); white-space: nowrap; }
