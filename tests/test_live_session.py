@@ -75,9 +75,10 @@ async def test_go_away_hands_over_with_handle(make_session):
 
 
 async def test_auth_error_stops_without_retry(make_session):
-    s, conn, _, _, statuses = make_session([errors.APIError(403, {})])
+    # The one extra attempt is the compression fallback: a rejected option looks like an auth error.
+    s, conn, _, _, statuses = make_session([errors.APIError(403, {}), errors.APIError(403, {})])
     await asyncio.wait_for(s.run(), 1)
-    assert len(conn.calls) == 1 and statuses[-1] == StatusEvent("error", "errors.auth", {})
+    assert len(conn.calls) == 2 and statuses == [StatusEvent("error", "errors.auth", {})]
 
 
 async def test_network_error_backs_off_then_reconnects(make_session):
@@ -163,3 +164,32 @@ async def test_session_connects_with_its_voice():
     await s.stop()
     task.cancel()
     assert conn.calls[0][1].speech_config.voice_config.prebuilt_voice_config.voice_name == "Puck"
+
+
+def test_build_config_compression():
+    c = build_config("en", None)
+    assert c.context_window_compression is not None and c.context_window_compression.sliding_window is not None
+    assert build_config("en", None, compression=False).context_window_compression is None
+
+
+async def test_failed_resume_drops_the_stale_handle(make_session):
+    # A session that outlived its limit cannot be resumed; retrying the same handle forever would never recover.
+    s, conn, _, _, statuses = make_session([errors.APIError(1011, "session not found"), FakeConnection([])])
+    s.handle = "h-old"
+    await run_until(s, lambda: s.connected)
+    assert [c[1].session_resumption.handle for c in conn.calls] == ["h-old", None]
+    assert statuses == []
+
+
+async def test_rejected_compression_falls_back_without_it(make_session):
+    s, conn, _, _, statuses = make_session([errors.APIError(1007, "Invalid argument: context_window_compression"),
+                                            FakeConnection([])])
+    await run_until(s, lambda: s.connected)
+    assert [c[1].context_window_compression is not None for c in conn.calls] == [True, False]
+    assert statuses == []
+
+
+async def test_network_failure_keeps_compression(make_session):
+    s, conn, *_ = make_session([OSError("down"), FakeConnection([])])
+    await run_until(s, lambda: s.connected)
+    assert all(c[1].context_window_compression is not None for c in conn.calls)

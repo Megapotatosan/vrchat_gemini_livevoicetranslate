@@ -46,7 +46,7 @@ class GeminiSettings(_Model):
     chunk_ms: int = 100  # audio is sent in chunks this long
     final_silence_s: float = 3.0  # quiet time before a finished sentence's bubble closes
     unterminated_silence_s: float = 8.0  # the same for a sentence without ending punctuation
-    max_new_sessions_per_minute: int = 4
+    max_new_sessions_per_minute: int = 4  # per direction: each direction has its own session and budget
     reconnect_backoff: list[float] = Field(default_factory=lambda: [2, 5, 10, 30])
     text_timeout_s: float = 20.0
 
